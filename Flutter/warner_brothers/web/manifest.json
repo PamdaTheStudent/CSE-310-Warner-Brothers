@@ -1,6 +1,6 @@
 {
-    "name": "warner_brothers",
-    "short_name": "warner_brothers",
+    "name": "testing_app_2",
+    "short_name": "testing_app_2",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
