@@ -1,5 +1,9 @@
+// ─────────────────────────────────────────────
+//  main.dart  –  app entry point
+// ─────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'screens/selection_screen.dart';
+import 'theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,13 +14,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Route Navigation',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
-      home: const SelectionScreen(),
+    // ValueListenableBuilder rebuilds this widget whenever
+    // themeNotifier.value changes (i.e. when the user taps the toggle).
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, mode, __) {
+        return MaterialApp(
+          title: 'Building Navigator',
+          debugShowCheckedModeBanner: false,
+          themeMode: mode,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          home: const SelectionScreen(),
+        );
+      },
     );
   }
 }

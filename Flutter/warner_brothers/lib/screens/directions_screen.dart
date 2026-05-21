@@ -1,169 +1,260 @@
+// ─────────────────────────────────────────────
+//  directions_screen.dart  –  navigation instructions
+// ─────────────────────────────────────────────
 import 'package:flutter/material.dart';
+import '../models/building.dart';
+import '../theme.dart';
+import '../widgets/building_map.dart';
 
 class DirectionsScreen extends StatefulWidget {
-  final String startBox;
-  final String endBox;
+  final List<BuildingFloor> building;
+  final NodePosition start;
+  final NodePosition end;
 
   const DirectionsScreen({
     Key? key,
-    required this.startBox,
-    required this.endBox,
+    required this.building,
+    required this.start,
+    required this.end,
   }) : super(key: key);
 
   @override
   State<DirectionsScreen> createState() => _DirectionsScreenState();
 }
 
-class _DirectionsScreenState extends State<DirectionsScreen> {
-  int currentStep = 0;
+class _DirectionsScreenState extends State<DirectionsScreen>
+    with TickerProviderStateMixin {
+  late List<NodePosition> _path;
+  late List<String> _steps;
+  int _currentStep = 0;
+  late int _displayedFloor;
 
-  final List<String> directions = [
-    'Turn Left',
-    'Go Straight',
-    'Turn Right',
-    'Arrived at Destination',
-  ];
+  late AnimationController _slideCtrl;
+  late Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _path = findPath(widget.building, widget.start, widget.end);
+    _steps = pathToDirections(_path, widget.building);
+    _displayedFloor = widget.start.floor;
+
+    _slideCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0.3, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOutCubic));
+    _slideCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _slideCtrl.dispose();
+    super.dispose();
+  }
+
+  BuildingFloor get _currentFloor =>
+      widget.building.firstWhere((f) => f.floorNumber == _displayedFloor);
+
+  void _nextStep() {
+    if (_currentStep < _steps.length - 1) {
+      setState(() {
+        _currentStep++;
+        _displayedFloor = _path[_currentStep].floor;
+        _slideCtrl.forward(from: 0.0);
+      });
+    }
+  }
+
+  void _prevStep() {
+    if (_currentStep > 0) {
+      setState(() {
+        _currentStep--;
+        _displayedFloor = _path[_currentStep].floor;
+        _slideCtrl.forward(from: 0.0);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.of(context).pop();
-        return false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('${widget.startBox} → ${widget.endBox}'),
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Direction Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  color: Colors.grey.withOpacity(0.1),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      color: Colors.grey.withOpacity(0.3),
-                      child: const Icon(Icons.image, size: 40),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('DIRECTIONS', style: TextStyle(letterSpacing: 2, fontSize: 16, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Floor tab switcher
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: widget.building.map((f) {
+                  final isCurrent = f.floorNumber == _displayedFloor;
+                  return GestureDetector(
+                    onTap: () => setState(() => _displayedFloor = f.floorNumber),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isCurrent ? Palette.accent(context) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: isCurrent ? Palette.accent(context) : Palette.border(context)),
+                      ),
                       child: Text(
-                        directions[currentStep],
-                        style: const TextStyle(
-                          fontSize: 32,
+                        f.name.toUpperCase(),
+                        style: TextStyle(
+                          color: isCurrent ? Colors.black : Palette.textSecondary(context),
                           fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                  ],
+                  );
+                }).toList(),
+              ),
+            ),
+
+            // Map Area
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border.all(color: Palette.borderSubtle(context)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: BuildingMap(
+                  floor: _currentFloor,
+                  path: _path,
+                  highlightStep: _currentStep,
+                  startId: widget.start.nodeId,
+                  endId: widget.end.nodeId,
                 ),
               ),
-              const SizedBox(height: 32),
-              // Map Display
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    color: Colors.grey.withOpacity(0.1),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.map, size: 80),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Map IMG',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+            ),
+
+            // Navigation Card Instructions
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(top: BorderSide(color: Palette.borderSubtle(context))),
               ),
-              const SizedBox(height: 32),
-              // Navigation Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  ElevatedButton(
-                    onPressed: currentStep > 0
-                        ? () {
-                            setState(() {
-                              currentStep--;
-                            });
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'STEP ${_currentStep + 1} OF ${_steps.length}',
+                        style: TextStyle(color: Palette.textHint(context), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
                       ),
-                      backgroundColor: Colors.grey[700],
-                      disabledBackgroundColor: Colors.grey[400],
-                    ),
-                    child: const Text(
-                      'Prev',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      if (_path.isNotEmpty)
+                        Text(
+                          'FLOOR ${_path[_currentStep].floor}',
+                          style: TextStyle(color: Palette.accent(context), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 50,
+                    width: double.infinity,
+                    child: SlideTransition(
+                      position: _slideAnim,
+                      child: Text(
+                        _steps.isEmpty ? 'No instructions available.' : _steps[_currentStep],
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.3),
                       ),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: currentStep < directions.length - 1
-                        ? () {
-                            setState(() {
-                              currentStep++;
-                            });
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _NavButton(
+                          label: 'BACK',
+                          icon: Icons.arrow_back,
+                          enabled: _currentStep > 0,
+                          onTap: _prevStep,
+                        ),
                       ),
-                      backgroundColor: Colors.grey[700],
-                      disabledBackgroundColor: Colors.grey[400],
-                    ),
-                    child: const Text(
-                      'Next',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _NavButton(
+                          label: _currentStep == _steps.length - 1 ? 'ARRIVED' : 'NEXT',
+                          icon: _currentStep == _steps.length - 1 ? Icons.check : Icons.arrow_forward,
+                          enabled: _currentStep < _steps.length - 1,
+                          isPrimary: true,
+                          onTap: _nextStep,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool enabled;
+  final bool isPrimary;
+  final VoidCallback onTap;
+
+  const _NavButton({
+    required this.label,
+    required this.icon,
+    required this.enabled,
+    this.isPrimary = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isPrimary ? Palette.accent(context) : Palette.textSecondary(context);
+
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: AnimatedOpacity(
+        opacity: enabled ? 1.0 : 0.3,
+        duration: const Duration(milliseconds: 200),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: isPrimary ? color.withOpacity(0.1) : Colors.transparent,
+            border: Border.all(color: isPrimary ? color : Palette.borderSubtle(context)),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (!isPrimary) ...[
+                Icon(icon, color: color, size: 14),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                label,
+                style: TextStyle(color: color, fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13),
+              ),
+              if (isPrimary && enabled && label != 'ARRIVED') ...[
+                const SizedBox(width: 8),
+                Icon(icon, color: color, size: 14),
+              ],
             ],
           ),
         ),
