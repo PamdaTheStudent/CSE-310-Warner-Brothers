@@ -34,11 +34,13 @@ class BuildingNode {
 class BuildingFloor {
   final int floorNumber;
   final String name;
+  final String assetPath;
   final Map<String, BuildingNode> nodes;
 
   const BuildingFloor({
     required this.floorNumber,
     required this.name,
+    required this.assetPath,
     required this.nodes,
   });
 
@@ -119,7 +121,11 @@ BuildingFloor _buildFloor1() {
   n('stairs_north',     'North Stairs',     NodeType.stairs, 32, 12, ['161', '104', 'hw_west_main']);
   n('stairs_southwest', 'Southwest Stairs', NodeType.stairs, 10, 88, ['hw_south', '145']);
 
-  return BuildingFloor(floorNumber: 1, name: 'Floor 1', nodes: nodes);
+  return BuildingFloor(
+      floorNumber: 1,
+      name: 'Floor 1',
+      assetPath: 'assets/images/stc_floor_1.png',
+      nodes: nodes);
 }
 
 // ─────────────────────────────────────────────

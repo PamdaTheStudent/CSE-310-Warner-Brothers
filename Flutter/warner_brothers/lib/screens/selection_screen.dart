@@ -126,19 +126,34 @@ class _SelectionScreenState extends State<SelectionScreen> {
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Container(
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: Palette.surface(context),
                   border: Border.all(color: Palette.border(context)),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.all(8),
-                child: BuildingMap(
-                  floor: _currentFloor,
-                  path: const [],
-                  highlightStep: -1,
-                  startId: startPos?.nodeId,
-                  endId: endPos?.nodeId,
-                  onNodeTap: _onNodeTap,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: BuildingMap(
+                        floor: _currentFloor,
+                        path: const [],
+                        highlightStep: -1,
+                        startId: startPos?.nodeId,
+                        endId: endPos?.nodeId,
+                        onNodeTap: _onNodeTap,
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Material(
+                        color: Palette.surface(context).withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

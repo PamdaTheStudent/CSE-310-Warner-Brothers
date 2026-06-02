@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/building.dart';
 import '../theme.dart';
 import '../widgets/building_map.dart';
+import '../screens/in-door_screen.dart';
 
 class DirectionsScreen extends StatefulWidget {
   final List<BuildingFloor> building;
@@ -12,11 +13,11 @@ class DirectionsScreen extends StatefulWidget {
   final NodePosition end;
 
   const DirectionsScreen({
-    Key? key,
+    super.key,
     required this.building,
     required this.start,
     required this.end,
-  }) : super(key: key);
+  });
 
   @override
   State<DirectionsScreen> createState() => _DirectionsScreenState();
@@ -114,6 +115,7 @@ class _DirectionsScreenState extends State<DirectionsScreen>
                           fontSize: 12,
                         ),
                       ),
+
                     ),
                   );
                 }).toList(),
@@ -124,18 +126,51 @@ class _DirectionsScreenState extends State<DirectionsScreen>
             Expanded(
               child: Container(
                 margin: const EdgeInsets.all(16),
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: Palette.surface(context),
                   border: Border.all(color: Palette.borderSubtle(context)),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.all(16),
-                child: BuildingMap(
-                  floor: _currentFloor,
-                  path: _path,
-                  highlightStep: _currentStep,
-                  startId: widget.start.nodeId,
-                  endId: widget.end.nodeId,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: BuildingMap(
+                        floor: _currentFloor,
+                        path: _path,
+                        highlightStep: _currentStep,
+                        startId: widget.start.nodeId,
+                        endId: widget.end.nodeId,
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Material(
+                        color: Palette.surface(context).withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(8),
+                        child: IconButton(
+                          icon: Icon(Icons.image_outlined,
+                              color: Palette.accent(context)),
+                          tooltip: 'Open Room View',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PictureScreen(
+                                  path: _path,
+                                  currentStep: _currentStep,
+                                  building: widget.building,
+                                ),
+                              ),
+                            );
+
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
