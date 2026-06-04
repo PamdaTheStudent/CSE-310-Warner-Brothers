@@ -19,10 +19,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
     return WillPopScope(
       onWillPop: () async => true,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Select Route'),
-          centerTitle: true,
-        ),
+        appBar: AppBar(title: const Text('Select Route'), centerTitle: true),
         body: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
