@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'screens/selection_screen.dart';
+import 'screens/room_buttons_screen.dart';
 import 'theme.dart';
 
 void main() {
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
           themeMode: mode,
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
-          home: const SelectionScreen(),
+          home: const RoomButtonsScreen(),
         );
       },
     );
