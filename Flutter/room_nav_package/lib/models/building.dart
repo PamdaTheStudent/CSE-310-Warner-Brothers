@@ -39,6 +39,8 @@ class BuildingNode {
 class BuildingFloor {
   final int    floorNumber;
   final String name;
+  /// Asset path for this floor's background image, e.g.
+  /// 'assets/images/stc_floor_1.png'
   final String imagePath;
   final Map<String, BuildingNode> nodes;
 
@@ -53,6 +55,9 @@ class BuildingFloor {
       nodes.values.where((n) => n.type == NodeType.room).toList();
 }
 
+// ── Building ────────────────────────────────────────────────
+// A named collection of floors.  Create one of these for each
+// physical building and pass it to RoomLayout.
 class Building {
   final String id;
   final String name;
@@ -95,6 +100,7 @@ Building buildSTCBuilding() => Building(
 BuildingFloor _buildFloor1() {
   final nodes = <String, BuildingNode>{};
 
+  // Optional trailing parameter accepts a pixel-space polygon from the tracer.
   void n(String id, String name, NodeType t, double x, double y,
       List<String> c, [List<Offset>? poly]) {
     nodes[id] = BuildingNode(
@@ -181,6 +187,7 @@ BuildingFloor _buildFloor1() {
     Offset(328, 744), Offset(334, 768), Offset(356, 764), Offset(355, 739),
   ]);
 
+  // Rooms newly traced (were missing from original model)
   n('101',  'Room 101',  NodeType.room, 49, 13, ['101A'], const [
     Offset(711, 80),  Offset(711, 98),  Offset(764, 98),  Offset(764, 80),
   ]);
@@ -214,3 +221,4 @@ BuildingFloor _buildFloor1() {
     nodes:       nodes,
   );
 }
+

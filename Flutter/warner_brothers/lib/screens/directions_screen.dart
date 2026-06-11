@@ -3,12 +3,13 @@
 // ─────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import '../models/building.dart';
+import '../models/pathfinding.dart';
 import '../theme.dart';
 import '../widgets/building_map.dart';
 import '../screens/in-door_screen.dart';
 
 class DirectionsScreen extends StatefulWidget {
-  final List<BuildingFloor> building;
+  final Building building;
   final NodePosition start;
   final NodePosition end;
 
@@ -58,7 +59,7 @@ class _DirectionsScreenState extends State<DirectionsScreen>
   }
 
   BuildingFloor get _currentFloor =>
-      widget.building.firstWhere((f) => f.floorNumber == _displayedFloor);
+      widget.building.floors.firstWhere((f) => f.floorNumber == _displayedFloor);
 
   void _nextStep() {
     if (_currentStep < _steps.length - 1) {
@@ -95,7 +96,7 @@ class _DirectionsScreenState extends State<DirectionsScreen>
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: widget.building.map((f) {
+                children: widget.building.floors.map((f) {
                   final isCurrent = f.floorNumber == _displayedFloor;
                   return GestureDetector(
                     onTap: () => setState(() => _displayedFloor = f.floorNumber),

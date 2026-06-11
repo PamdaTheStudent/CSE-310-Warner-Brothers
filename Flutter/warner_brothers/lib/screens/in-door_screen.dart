@@ -7,7 +7,7 @@ import '../screens/directions_screen.dart';
 class PictureScreen extends StatelessWidget {
 final List<NodePosition> path;
 final int currentStep;
-final List<BuildingFloor> building;
+final Building building;
   const PictureScreen({
     super.key,
     required this.path,

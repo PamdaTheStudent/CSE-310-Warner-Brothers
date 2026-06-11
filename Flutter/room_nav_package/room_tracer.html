@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Room Polygon Tracer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: monospace; display: flex; flex-direction: column; height: 100vh; }
+
+  #toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; background: #161b22;
+    border-bottom: 1px solid #30363d; flex-shrink: 0;
+  }
+  #toolbar label { font-size: 13px; color: #8b949e; }
+  #toolbar input[type=file] { color: #e6edf3; font-size: 13px; }
+  button {
+    background: #21262d; border: 1px solid #30363d; color: #e6edf3;
+    padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
+  }
+  button:hover { background: #30363d; }
+  button.danger { border-color: #f85149; color: #f85149; }
+  button.danger:hover { background: #3d1212; }
+  #roomLabel { background: #0d1117; border: 1px solid #30363d; color: #e6edf3; padding: 4px 8px; border-radius: 4px; font-size: 13px; width: 100px; }
+
+  #main { display: flex; flex: 1; overflow: hidden; }
+
+  #canvasWrap {
+    flex: 1; overflow: hidden; position: relative; cursor: crosshair;
+  }
+  canvas { display: block; }
+
+  #sidebar {
+    width: 320px; background: #161b22; border-left: 1px solid #30363d;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  #sidebar h3 { padding: 10px 14px; font-size: 13px; color: #8b949e; border-bottom: 1px solid #30363d; }
+  #output {
+    flex: 1; overflow-y: auto; padding: 12px;
+    font-size: 12px; line-height: 1.7; white-space: pre-wrap;
+    color: #79c0ff;
+  }
+  #hint { padding: 10px 14px; font-size: 11px; color: #484f58; border-top: 1px solid #30363d; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <label>Image:</label>
+  <input type="file" id="fileInput" accept="image/*">
+  <label>Room ID:</label>
+  <input type="text" id="roomLabel" placeholder="e.g. 201">
+  <button id="btnUndo">↩ Undo</button>
+  <button id="btnClose" class="danger">✕ Close</button>
+  <button id="btnFinish">✔ Finish Room</button>
+  <button id="btnClearAll" class="danger">Clear All</button>
+  <span id="status" style="font-size:12px;color:#8b949e;margin-left:8px;"></span>
+</div>
+
+<div id="main">
+  <div id="canvasWrap">
+    <canvas id="c"></canvas>
+  </div>
+  <div id="sidebar">
+    <h3>Output — paste into building.dart</h3>
+    <div id="output"></div>
+    <div id="hint">
+      <b>Click</b> to place points<br>
+      <b>✔ Finish Room</b> to close polygon &amp; print coords<br>
+      <b>Scroll</b> to zoom · <b>Middle mouse</b> or <b>Space+drag</b> to pan<br>
+      <b>↩ Undo</b> removes last point · <b>✕ Close</b> cancels current room
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas  = document.getElementById('c');
+const ctx     = canvas.getContext('2d');
+const output  = document.getElementById('output');
+const status  = document.getElementById('status');
+
+let img       = null;
+let imgNW     = 0, imgNH = 0;   // natural image dimensions
+
+// View transform
+let offsetX = 0, offsetY = 0, zoom = 1;
+
+// Current polygon being drawn
+let points = [];
+
+// All finished rooms
+let rooms = [];
+
+// Pan state
+let isPanning  = false;
+let panStartX  = 0, panStartY  = 0;
+let panStartOX = 0, panStartOY = 0;
+let panMoved   = false;
+let spaceDown  = false;
+
+// ── Load image ───────────────────────────────────────────────
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const i   = new Image();
+  i.onload = () => {
+    img   = i;
+    imgNW = i.naturalWidth;
+    imgNH = i.naturalHeight;
+
+    // Fit image to canvas on load
+    const wrap = document.getElementById('canvasWrap');
+    canvas.width  = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
+
+    const scaleX = canvas.width  / imgNW;
+    const scaleY = canvas.height / imgNH;
+    zoom    = Math.min(scaleX, scaleY) * 0.9;
+    offsetX = (canvas.width  - imgNW * zoom) / 2;
+    offsetY = (canvas.height - imgNH * zoom) / 2;
+
+    redraw();
+    status.textContent = `${imgNW} × ${imgNH} px`;
+  };
+  i.src = url;
+});
+
+// ── Coordinate helpers ───────────────────────────────────────
+// Canvas pixel → image pixel
+function canvasToImg(cx, cy) {
+  return { x: (cx - offsetX) / zoom, y: (cy - offsetY) / zoom };
+}
+// Image pixel → canvas pixel
+function imgToCanvas(ix, iy) {
+  return { x: ix * zoom + offsetX, y: iy * zoom + offsetY };
+}
+
+// ── Redraw ───────────────────────────────────────────────────
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!img) return;
+
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(zoom, zoom);
+  ctx.drawImage(img, 0, 0);
+  ctx.restore();
+
+  // Finished rooms
+  for (const room of rooms) {
+    drawPolygon(room.points, 'rgba(0,137,123,0.35)', '#00bcd4', 1.5 / zoom, room.id);
+  }
+
+  // Current polygon in progress
+  if (points.length > 0) {
+    drawPolygon(points, 'rgba(255,183,77,0.25)', '#ffb300', 2 / zoom, null);
+
+    // Dot on each point
+    for (const p of points) {
+      const c = imgToCanvas(p.x, p.y);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffb300';
+      ctx.fill();
+    }
+  }
+}
+
+function drawPolygon(pts, fill, stroke, lineWidth, label) {
+  if (pts.length < 2) return;
+  ctx.beginPath();
+  const first = imgToCanvas(pts[0].x, pts[0].y);
+  ctx.moveTo(first.x, first.y);
+  for (let i = 1; i < pts.length; i++) {
+    const p = imgToCanvas(pts[i].x, pts[i].y);
+    ctx.lineTo(p.x, p.y);
+  }
+  if (pts.length > 2) ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth   = lineWidth;
+  ctx.stroke();
+
+  // Label at centroid
+  if (label && pts.length > 2) {
+    const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+    const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    const c  = imgToCanvas(cx, cy);
+    ctx.font      = `bold ${Math.max(10, 13 / zoom)}px monospace`;
+    ctx.fillStyle = '#e6edf3';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, c.x, c.y);
+  }
+}
+
+// ── Click to place points ────────────────────────────────────
+canvas.addEventListener('click', e => {
+  if (!img) return;
+  if (panMoved) return;   // was a pan, not a click
+
+  const rect = canvas.getBoundingClientRect();
+  const cx   = e.clientX - rect.left;
+  const cy   = e.clientY - rect.top;
+  const ip   = canvasToImg(cx, cy);
+  points.push({ x: Math.round(ip.x), y: Math.round(ip.y) });
+  redraw();
+});
+
+// ── Buttons ──────────────────────────────────────────────────
+document.getElementById('btnUndo').addEventListener('click', () => {
+  points.pop();
+  redraw();
+});
+
+document.getElementById('btnClose').addEventListener('click', () => {
+  points = [];
+  redraw();
+});
+
+document.getElementById('btnFinish').addEventListener('click', () => {
+  if (points.length < 3) { alert('Need at least 3 points.'); return; }
+  const id = document.getElementById('roomLabel').value.trim() || '???';
+  rooms.push({ id, points: [...points] });
+  printRoom(id, points);
+  points = [];
+  redraw();
+});
+
+document.getElementById('btnClearAll').addEventListener('click', () => {
+  if (!confirm('Clear all traced rooms?')) return;
+  rooms  = [];
+  points = [];
+  output.textContent = '';
+  redraw();
+});
+
+// ── Output ───────────────────────────────────────────────────
+function printRoom(id, pts) {
+  const offsets = pts.map(p => `Offset(${p.x}, ${p.y})`).join(', ');
+  const line    = `n('${id}', 'Room ${id}', NodeType.room, 0, 0, ['hw_your_hallway'], const [${offsets}]);\n`;
+  output.textContent += line + '\n';
+}
+
+// ── Scroll to zoom ───────────────────────────────────────────
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect   = canvas.getBoundingClientRect();
+  const mx     = e.clientX - rect.left;
+  const my     = e.clientY - rect.top;
+  const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+
+  // Fixed-point zoom around mouse position
+  offsetX = mx - (mx - offsetX) * factor;
+  offsetY = my - (my - offsetY) * factor;
+  zoom   *= factor;
+  redraw();
+}, { passive: false });
+
+// ── Pan: middle mouse ────────────────────────────────────────
+canvas.addEventListener('mousedown', e => {
+  if (e.button === 1 || spaceDown) {
+    e.preventDefault();
+    isPanning  = true;
+    panMoved   = false;
+    panStartX  = e.clientX;
+    panStartY  = e.clientY;
+    panStartOX = offsetX;
+    panStartOY = offsetY;
+    canvas.style.cursor = 'grab';
+  }
+});
+
+window.addEventListener('mousemove', e => {
+  if (!isPanning) return;
+  const dx = e.clientX - panStartX;
+  const dy = e.clientY - panStartY;
+  if (Math.abs(dx) > 2 || Math.abs(dy) > 2) panMoved = true;
+  offsetX = panStartOX + dx;
+  offsetY = panStartOY + dy;
+  redraw();
+});
+
+window.addEventListener('mouseup', e => {
+  if (!isPanning) return;
+  isPanning = false;
+  canvas.style.cursor = 'crosshair';
+  // Reset panMoved after this event cycle so the mouseup's click
+  // is still blocked, but the NEXT click works normally.
+  setTimeout(() => { panMoved = false; }, 0);
+});
+
+// ── Pan: spacebar + drag ─────────────────────────────────────
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !spaceDown) {
+    spaceDown = true;
+    canvas.style.cursor = 'grab';
+    e.preventDefault();
+  }
+});
+
+window.addEventListener('keyup', e => {
+  if (e.code === 'Space') {
+    spaceDown = false;
+    canvas.style.cursor = 'crosshair';
+  }
+});
+
+// ── Resize canvas when window resizes ───────────────────────
+window.addEventListener('resize', () => {
+  const wrap = document.getElementById('canvasWrap');
+  canvas.width  = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  redraw();
+});
+
+// Initial canvas size
+window.dispatchEvent(new Event('resize'));
+</script>
+</body>
+</html>

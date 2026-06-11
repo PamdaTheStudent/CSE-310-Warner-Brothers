@@ -94,7 +94,7 @@ class _BuildingMapState extends State<BuildingMap>
                   // 1. Blueprint Floor Plan Background Image Layer
                   Positioned.fill(
                     child: Image.asset(
-                      widget.floor.assetPath,
+                      widget.floor.imagePath,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
@@ -103,7 +103,7 @@ class _BuildingMapState extends State<BuildingMap>
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
-                                'Missing background asset:\n${widget.floor.assetPath}',
+                                'Missing background asset:\n${widget.floor.imagePath}',
                                 style: const TextStyle(color: Colors.redAccent, fontSize: 10),
                                 textAlign: TextAlign.center,
                               ),
