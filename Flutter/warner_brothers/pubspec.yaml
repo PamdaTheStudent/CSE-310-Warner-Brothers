@@ -54,13 +54,11 @@ dev_dependencies:
 flutter:
   assets: 
   -   assets/images/
+  - assets/map.png
     # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
-  assets:
-    - assets/map.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
