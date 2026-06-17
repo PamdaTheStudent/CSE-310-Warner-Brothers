@@ -3,7 +3,6 @@
 // ─────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import '../models/building.dart';
-import '../theme.dart';
 
 class _IndoorViewState extends State<IndoorView>
     with SingleTickerProviderStateMixin {
@@ -43,9 +42,6 @@ class _IndoorViewState extends State<IndoorView>
 
   @override
   Widget build(BuildContext context) {
-    final pathNodeIds = _pathNodeIds;
-    final currentNode = _currentNode;
-
     return LayoutBuilder(
       builder: (context, constraints) {
         // Map bounds scale grid to match your 0-100 coordinates from building.dart
@@ -64,7 +60,7 @@ class _IndoorViewState extends State<IndoorView>
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         child: Center(
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
