@@ -7,7 +7,6 @@ import '../models/pathfinding.dart';
 import '../theme.dart';
 import '../widgets/building_map.dart';
 import '../widgets/Indoor_view.dart';
-import '../screens/in-door_screen.dart';
 
 class DirectionsScreen extends StatefulWidget {
   final Building building;
