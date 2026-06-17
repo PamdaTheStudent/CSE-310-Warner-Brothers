@@ -29,17 +29,6 @@ class _IndoorViewState extends State<IndoorView>
     super.dispose();
   }
 
-  Set<String> get _pathNodeIds => widget.path
-      .where((p) => p.floor == widget.floor.floorNumber)
-      .map((p) => p.nodeId)
-      .toSet();
-
-  BuildingNode? get _currentNode {
-    if (widget.highlightStep < 0 || widget.highlightStep >= widget.path.length) return null;
-    final pos = widget.path[widget.highlightStep];
-    return pos.floor == widget.floor.floorNumber ? widget.floor.nodes[pos.nodeId] : null;
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
