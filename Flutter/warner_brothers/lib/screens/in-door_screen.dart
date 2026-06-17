@@ -22,11 +22,16 @@ final Building building;
         title: const Text('Picture Screen'),
       ),
       body: Center(
-        child: Image.asset(
+        child:
+        Column(
+          children: [Image.asset(
           'assets/images/${path[currentStep].nodeId}.png',
           fit: BoxFit.contain,
         ),
+
+        ])
       ),
+
     );
   }
 }

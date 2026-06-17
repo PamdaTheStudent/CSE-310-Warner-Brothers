@@ -6,12 +6,14 @@ import '../models/building.dart';
 import '../models/pathfinding.dart';
 import '../theme.dart';
 import '../widgets/building_map.dart';
+import '../widgets/Indoor_view.dart';
 import '../screens/in-door_screen.dart';
 
 class DirectionsScreen extends StatefulWidget {
   final Building building;
   final NodePosition start;
   final NodePosition end;
+  final bool indoor = false;
 
   const DirectionsScreen({
     super.key,
@@ -28,9 +30,9 @@ class _DirectionsScreenState extends State<DirectionsScreen>
     with TickerProviderStateMixin {
   late List<NodePosition> _path;
   late List<String> _steps;
-  int _currentStep = 0;
+  late int _currentStep = 0;
   late int _displayedFloor;
-
+  late bool _indoor = false;
   late AnimationController _slideCtrl;
   late Animation<Offset> _slideAnim;
 
@@ -40,7 +42,7 @@ class _DirectionsScreenState extends State<DirectionsScreen>
     _path = findPath(widget.building, widget.start, widget.end);
     _steps = pathToDirections(_path, widget.building);
     _displayedFloor = widget.start.floor;
-
+    _indoor = widget.indoor;
     _slideCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -126,7 +128,7 @@ class _DirectionsScreenState extends State<DirectionsScreen>
             // Map Area
             Expanded(
               child: Container(
-                margin: const EdgeInsets.all(16),
+                margin: const EdgeInsets.all(4),
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: Palette.surface(context),
@@ -136,37 +138,36 @@ class _DirectionsScreenState extends State<DirectionsScreen>
                 child: Stack(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: BuildingMap(
+                      padding: const EdgeInsets.all(0),
+                      child: _indoor?
+                      IndoorView(
+                          floor: _currentFloor,
+                          path: _path,
+                          highlightStep: _currentStep
+                      ) : BuildingMap(
                         floor: _currentFloor,
                         path: _path,
                         highlightStep: _currentStep,
                         startId: widget.start.nodeId,
                         endId: widget.end.nodeId,
+                        indoor: _indoor,
                       ),
                     ),
                     Positioned(
-                      top: 12,
-                      right: 12,
+                      top: 6,
+                      right: 6,
                       child: Material(
-                        color: Palette.surface(context).withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(8),
+                        color: Palette.surface(context).withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(16),
+
                         child: IconButton(
                           icon: Icon(Icons.image_outlined,
                               color: Palette.accent(context)),
                           tooltip: 'Open Room View',
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PictureScreen(
-                                  path: _path,
-                                  currentStep: _currentStep,
-                                  building: widget.building,
-                                ),
-                              ),
-                            );
-
+                            setState(() {
+                              _indoor = !_indoor;
+                            });
                           },
                         ),
                       ),
@@ -298,3 +299,4 @@ class _NavButton extends StatelessWidget {
     );
   }
 }
+
