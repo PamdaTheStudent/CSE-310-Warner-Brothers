@@ -129,14 +129,14 @@ final Map<String, List<String>> floorNodes = {
 /// ROOM → NODE
 final Map<String, String> roomToNode = {
   "STC 361": "N1",
-  "STC 361": "N2",
+  "STC 362": "N2",
   "STC 367": "N3",
-  "STC 367": "N4",
+  "STC 368": "N4",
   "STC 353": "N5",
-  "STC 353": "N6",
+  "STC 354": "N6",
   "STC 341": "N8",
   "STC 347": "N9",
-  "STC 341": "N10",
+  "STC 342": "N10",
   "STC 300F": "N14",
 };
 

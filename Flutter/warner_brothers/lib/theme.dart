@@ -99,8 +99,8 @@ class Palette {
   // ── Overlay (semi-transparent tint) ────────
   static Color overlayBg(BuildContext context) =>
       _isDark(context)
-          ? Colors.white.withOpacity(0.05)
-          : Colors.black.withOpacity(0.05);
+          ? Colors.white.withAlpha((0.05 * 255).round())
+          : Colors.black.withAlpha((0.05 * 255).round());
 
   // ── Grid: wall cells ───────────────────────
   static Color cellWall(BuildContext context) =>
@@ -112,23 +112,23 @@ class Palette {
   // ── Grid: hallway cells ────────────────────
   static Color cellHallway(BuildContext context) =>
       _isDark(context)
-          ? const Color(0xFF0F3460).withOpacity(0.2)
+          ? const Color(0xFF0F3460).withAlpha((0.2 * 255).round())
           : const Color(0xFFE3F2FD);
 
   static Color cellHallwayPath(BuildContext context) =>
       _isDark(context)
-          ? const Color(0xFF0F3460).withOpacity(0.6)
-          : const Color(0xFF1565C0).withOpacity(0.2);
+          ? const Color(0xFF0F3460).withAlpha((0.6 * 255).round())
+          : const Color(0xFF1565C0).withAlpha((0.2 * 255).round());
 
   // ── Grid: staircase cells ──────────────────
   static Color cellStaircase(BuildContext context) =>
       _isDark(context)
-          ? const Color(0xFF533483).withOpacity(0.5)
+          ? const Color(0xFF533483).withAlpha((0.5 * 255).round())
           : const Color(0xFFEDE7F6);
 
   static Color cellStaircasePath(BuildContext context) =>
       _isDark(context)
-          ? const Color(0xFF533483).withOpacity(0.9)
+          ? const Color(0xFF533483).withAlpha((0.9 * 255).round())
           : const Color(0xFFD1C4E9);
 
   static Color cellStaircaseBorder(BuildContext context) =>
@@ -150,8 +150,8 @@ class Palette {
   // Path-highlighted room
   static Color cellRoomPath(BuildContext context) =>
       _isDark(context)
-          ? const Color(0xFF1565C0).withOpacity(0.7)
-          : const Color(0xFF1976D2).withOpacity(0.4);
+          ? const Color(0xFF1565C0).withAlpha((0.7 * 255).round())
+          : const Color(0xFF1976D2).withAlpha((0.4 * 255).round());
 
   static Color cellRoomPathBorder(BuildContext context) =>
       _isDark(context) ? Colors.lightBlueAccent : Colors.blue;

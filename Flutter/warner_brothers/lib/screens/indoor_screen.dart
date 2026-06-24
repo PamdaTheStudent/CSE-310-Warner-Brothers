@@ -1,18 +1,15 @@
-import 'package:TeamProject/models/building.dart';
+import 'package:team_project/models/building.dart';
 import 'package:flutter/material.dart';
-import '../screens/directions_screen.dart';
-
-
 
 class PictureScreen extends StatelessWidget {
-final List<NodePosition> path;
-final int currentStep;
-final Building building;
+  final List<NodePosition> path;
+  final int currentStep;
+  final Building building;
   const PictureScreen({
     super.key,
     required this.path,
     required this.currentStep,
-    required this.building
+    required this.building,
   });
 
   @override

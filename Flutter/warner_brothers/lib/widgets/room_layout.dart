@@ -13,7 +13,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/building.dart';
-import '../models/pathfinding.dart';
 import '../screens/directions_screen.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -64,7 +63,7 @@ class _C {
 class RoomLayout extends StatefulWidget {
   final Building building;
 
-  const RoomLayout({Key? key, required this.building}) : super(key: key);
+  const RoomLayout({super.key, required this.building});
 
   @override
   State<RoomLayout> createState() => _RoomLayoutState();
@@ -124,13 +123,10 @@ class _RoomLayoutState extends State<RoomLayout> {
   }
 
   void _getDirections() {
-    final start = NodePosition(_floorA!, _selectedA!.id);
-    final end   = NodePosition(_floorB!, _selectedB!.id);
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => DirectionsScreen(
-        building: widget.building,
-        start:    start,
-        end:      end,
+        startBox: _selectedA!.name,
+        endBox:   _selectedB!.name,
       ),
     ));
   }
@@ -259,9 +255,9 @@ class _RoomChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color:        color.withOpacity(0.12),
+        color:        color.withAlpha((0.12 * 255).round()),
         borderRadius: BorderRadius.circular(6),
-        border:       Border.all(color: color.withOpacity(0.5)),
+        border:       Border.all(color: color.withAlpha((0.5 * 255).round())),
       ),
       child: Text(
         label,
@@ -371,9 +367,9 @@ class _RoomMapState extends State<_RoomMap> {
               child: Image.asset(
                 widget.floor.imagePath,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    const ColoredBox(color: Color(0xFF161B22)),
-              ),
+                errorBuilder: (context, error, stackTrace) =>
+                  const ColoredBox(color: Color(0xFF161B22)),
+                ),
             ),
 
             if (_imgSize != null)
@@ -455,16 +451,18 @@ class _PolygonPainter extends CustomPainter {
       final isB    = selectedBId == node.id;
 
       final path = Path()..moveTo(pts.first.dx, pts.first.dy);
-      for (final pt in pts.skip(1)) path.lineTo(pt.dx, pt.dy);
+      for (final pt in pts.skip(1)) {
+        path.lineTo(pt.dx, pt.dy);
+      }
       path.close();
 
       if (isA) {
         canvas.drawPath(path, Paint()
-          ..color = _C.roomStart.withOpacity(0.60)
+          ..color = _C.roomStart.withAlpha((0.60 * 255).round())
           ..style = PaintingStyle.fill);
       } else if (isB) {
         canvas.drawPath(path, Paint()
-          ..color = _C.roomEnd.withOpacity(0.55)
+          ..color = _C.roomEnd.withAlpha((0.55 * 255).round())
           ..style = PaintingStyle.fill);
       }
 
@@ -574,8 +572,8 @@ class _StatusBanner extends StatelessWidget {
     }
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      color:   color.withOpacity(0.08),
+    duration: const Duration(milliseconds: 200),
+    color:   color.withAlpha((0.08 * 255).round()),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -625,9 +623,9 @@ class _FloorTabs extends StatelessWidget {
                 margin:  const EdgeInsets.symmetric(horizontal: 4),
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: sel
-                      ? _C.accent(context).withOpacity(0.15)
-                      : Colors.transparent,
+                      color: sel
+                        ? _C.accent(context).withAlpha((0.15 * 255).round())
+                        : Colors.transparent,
                   border: Border(
                     bottom: BorderSide(
                       color: sel ? _C.accent(context) : Colors.transparent,

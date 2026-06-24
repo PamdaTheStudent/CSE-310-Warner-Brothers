@@ -14,14 +14,14 @@ class BuildingMap extends StatefulWidget {
   final ValueChanged<BuildingNode>? onNodeTap; // null = read-only navigation mode
 
   const BuildingMap({
-    Key? key,
+    super.key,
     required this.floor,
     required this.path,
     required this.highlightStep,
     this.startId,
     this.endId,
     this.onNodeTap,
-  }) : super(key: key);
+  });
 
   @override
   State<BuildingMap> createState() => _BuildingMapState();
@@ -98,7 +98,7 @@ class _BuildingMapState extends State<BuildingMap>
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: Theme.of(context).colorScheme.surfaceVariant,
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           child: Center(
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -137,7 +137,7 @@ class _BuildingMapState extends State<BuildingMap>
                     if (node.type == NodeType.hallway) return const SizedBox.shrink();
 
                     // Style configs fetched from your theme palette
-                    Color nodeColor = Palette.cellRoom(context).withOpacity(0.85);
+                    Color nodeColor = Palette.cellRoom(context).withAlpha((0.85 * 255).round());
                     Color borderColor = Palette.cellRoomBorder(context);
                     Color textColor = Palette.cellRoomText(context);
 
@@ -172,7 +172,7 @@ class _BuildingMapState extends State<BuildingMap>
                             border: Border.all(color: borderColor, width: 1.5),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
+                                color: Colors.black.withAlpha((0.15 * 255).round()),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               )
@@ -200,7 +200,7 @@ class _BuildingMapState extends State<BuildingMap>
                       top: toCanvas(currentNode.x, currentNode.y).dy - 12,
                       child: AnimatedBuilder(
                         animation: _scale,
-                        builder: (_, __) => Transform.scale(
+                        builder: (context, child) => Transform.scale(
                           scale: _scale.value,
                           child: Container(
                             width: 24,
@@ -210,7 +210,7 @@ class _BuildingMapState extends State<BuildingMap>
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.cyanAccent.withOpacity(0.7),
+                                  color: Colors.cyanAccent.withAlpha((0.7 * 255).round()),
                                   blurRadius: 10,
                                   spreadRadius: 3,
                                 ),
@@ -247,11 +247,11 @@ class _EdgePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Hidden structures get a subtle hint, active routes get a prominent highlight
     final basePaint = Paint()
-      ..color = Palette.border(context).withOpacity(0.15)
+      ..color = Palette.border(context).withAlpha((0.15 * 255).round())
       ..strokeWidth = 2.0;
 
     final pathPaint = Paint()
-      ..color = Palette.accent(context).withOpacity(0.85)
+      ..color = Palette.accent(context).withAlpha((0.85 * 255).round())
       ..strokeWidth = 5.5
       ..strokeCap = StrokeCap.round;
 

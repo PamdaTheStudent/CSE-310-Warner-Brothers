@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'directions_screen.dart';
 
 class SelectionScreen extends StatefulWidget {
-  const SelectionScreen({Key? key}) : super(key: key);
+  const SelectionScreen({super.key});
 
   @override
   State<SelectionScreen> createState() => _SelectionScreenState();
@@ -47,8 +47,8 @@ class _SelectionScreenState extends State<SelectionScreen> {
                       width: 2,
                     ),
                     color: startBox != null
-                        ? Colors.cyan.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.1),
+                      ? Colors.cyan.withAlpha((0.2 * 255).round())
+                      : Colors.grey.withAlpha((0.1 * 255).round()),
                   ),
                   child: Center(
                     child: Text(
@@ -84,8 +84,8 @@ class _SelectionScreenState extends State<SelectionScreen> {
                       width: 2,
                     ),
                     color: endBox != null
-                        ? Colors.cyan.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.1),
+                      ? Colors.cyan.withAlpha((0.2 * 255).round())
+                      : Colors.grey.withAlpha((0.1 * 255).round()),
                   ),
                   child: Center(
                     child: Text(

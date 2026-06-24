@@ -5,10 +5,10 @@ class DirectionsScreen extends StatefulWidget {
   final String endBox;
 
   const DirectionsScreen({
-    Key? key,
+    super.key,
     required this.startBox,
     required this.endBox,
-  }) : super(key: key);
+  });
 
   @override
   State<DirectionsScreen> createState() => _DirectionsScreenState();
@@ -53,14 +53,14 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withAlpha((0.1 * 255).round()),
                 ),
                 child: Row(
                   children: [
                     Container(
                       width: 80,
                       height: 80,
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withAlpha((0.3 * 255).round()),
                       child: const Icon(Icons.image, size: 40),
                     ),
                     const SizedBox(width: 16),
@@ -82,7 +82,7 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.grey.withAlpha((0.1 * 255).round()),
                   ),
                   child: Center(
                     child: Column(
@@ -92,7 +92,7 @@ class _DirectionsScreenState extends State<DirectionsScreen> {
                           width: 150,
                           height: 150,
                           decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.3),
+                            color: Colors.grey.withAlpha((0.3 * 255).round()),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.map, size: 80),
