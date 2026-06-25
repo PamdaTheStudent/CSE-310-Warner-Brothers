@@ -1,5 +1,7 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
+import 'models/nav_models.dart';
+import 'data/stc_building.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,21 +19,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class NavNode {
-  final String id;
-
-  /// STORED AS RAW PIXEL COORDINATES matching map.png
-  final Offset position;
-
-  final List<String> neighbors;
-
-  NavNode({
-    required this.id,
-    required this.position,
-    required this.neighbors,
-  });
-}
-
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -40,106 +27,42 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  /// HALLWAY GRAPH
-  ///
-  /// POSITIONS ARE RAW PIXEL COORDINATES from map.png
-  /// x = pixels from left edge
-  /// y = pixels from top edge
-  /// NAV GRAPH
-final Map<String, NavNode> nodes = {
+  // Pull floor 3 data from the STC building file.
+  final _floor = stcBuilding.floor(3)!;
 
-  // ── STC Floor 3 ─────────────────
-  "N1": NavNode(
-    id: "N1",
-    position: const Offset(453, 184),
-    neighbors: ["N5", "N2"],
-  ),
-  "N2": NavNode(
-    id: "N2",
-    position: const Offset(560, 184),
-    neighbors: ["N1", "N3"],
-  ),
-  "N3": NavNode(
-    id: "N3",
-    position: const Offset(591, 185),
-    neighbors: ["N2", "N4"],
-  ),
-  "N4": NavNode(
-    id: "N4",
-    position: const Offset(694, 183),
-    neighbors: ["N3"],
-  ),
-  "N5": NavNode(
-    id: "N5",
-    position: const Offset(433, 186),
-    neighbors: ["N6", "N1"],
-  ),
-  "N6": NavNode(
-    id: "N6",
-    position: const Offset(329, 183),
-    neighbors: ["N7", "N5"],
-  ),
-  "N7": NavNode(
-    id: "N7",
-    position: const Offset(306, 181),
-    neighbors: ["N10", "N8", "N6"],
-  ),
-  "N8": NavNode(
-    id: "N8",
-    position: const Offset(305, 164),
-    neighbors: ["N7", "N9"],
-  ),
-  "N9": NavNode(
-    id: "N9",
-    position: const Offset(305, 139),
-    neighbors: ["N8"],
-  ),
-  "N10": NavNode(
-    id: "N10",
-    position: const Offset(312, 294),
-    neighbors: ["N11", "N7"],
-  ),
-  "N11": NavNode(
-    id: "N11",
-    position: const Offset(321, 459),
-    neighbors: ["N12", "N10"],
-  ),
-  "N12": NavNode(
-    id: "N12",
-    position: const Offset(334, 513),
-    neighbors: ["N13", "N11"],
-  ),
-  "N13": NavNode(
-    id: "N13",
-    position: const Offset(286, 522),
-    neighbors: ["N14", "N12"],
-  ),
-  "N14": NavNode(
-    id: "N14",
-    position: const Offset(279, 497),
-    neighbors: ["N13"],
-  ),
-};
+  // Tracks which rooms the user has tapped (by RoomPolygon id).
+  String? _selectedStart;
+  String? _selectedEnd;
 
-/// FLOOR GROUPS
-final Map<String, List<String>> floorNodes = {
-  "STC Floor 3": ["N1", "N2", "N3", "N4", "N5", "N6", "N7", "N8", "N9", "N10", "N11", "N12", "N13", "N14"],
-};
+  // Called when the user taps the map inside the InteractiveViewer.
+  // localPosition is already in the widget's local coordinate space,
+  // so it matches the screen coords produced by _pixelToScreen.
+  void _handleMapTap(Offset localPos, _ImageRect rect) {
+    for (final room in _floor.rooms) {
+      final pts = room.pixels
+          .map((p) => _pixelToScreen(p, rect))
+          .toList();
+      final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+      for (final pt in pts.skip(1)) path.lineTo(pt.dx, pt.dy);
+      path.close();
 
-/// ROOM → NODE
-final Map<String, String> roomToNode = {
-  "STC 361": "N1",
-  "STC 362": "N2",
-  "STC 367": "N3",
-  "STC 368": "N4",
-  "STC 353": "N5",
-  "STC 354": "N6",
-  "STC 341": "N8",
-  "STC 347": "N9",
-  "STC 342": "N10",
-  "STC 300F": "N14",
-};
+      if (!path.contains(localPos)) continue;
 
+      setState(() {
+        if (room.id == _selectedStart) {
+          _selectedStart = _selectedEnd;
+          _selectedEnd   = null;
+        } else if (room.id == _selectedEnd) {
+          _selectedEnd = null;
+        } else if (_selectedStart == null) {
+          _selectedStart = room.id;
+        } else {
+          _selectedEnd = room.id;
+        }
+      });
+      return;
+    }
+  }
 
   List<Offset> routePoints = [];
 
@@ -159,7 +82,7 @@ final Map<String, String> roomToNode = {
 
       if (current == goal) break;
 
-      for (final next in nodes[current]!.neighbors) {
+      for (final next in _floor.navNodes[current]!.neighbors) {
         if (!cameFrom.containsKey(next)) {
           queue.add(next);
           cameFrom[next] = current;
@@ -178,23 +101,35 @@ final Map<String, String> roomToNode = {
     return path;
   }
 
-  void generateRoute() {
-    String startRoom = startController.text.trim();
-    String endRoom   = endController.text.trim();
+  // Looks up a nav node by room number. Input is trimmed before lookup.
+  String? _resolveRoom(String input) => _floor.roomToNode[input.trim()];
 
-    if (!roomToNode.containsKey(startRoom) ||
-        !roomToNode.containsKey(endRoom)) {
+  void generateRoute() {
+    // Prefer tapped polygon selections; fall back to text fields.
+    final startNode = _selectedStart != null
+        ? _resolveRoom(_selectedStart!)
+        : _resolveRoom(startController.text);
+    final endNode = _selectedEnd != null
+        ? _resolveRoom(_selectedEnd!)
+        : _resolveRoom(endController.text);
+
+    if (startNode == null || endNode == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(startNode == null
+              ? 'No start room selected'
+              : 'No destination room selected'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
       return;
     }
 
-    String startNode = roomToNode[startRoom]!;
-    String endNode   = roomToNode[endRoom]!;
-
-    List<String> nodePath = findPath(startNode, endNode);
+    final nodePath = findPath(startNode, endNode);
 
     setState(() {
       routePoints = nodePath
-          .map((id) => nodes[id]!.position)
+          .map((id) => _floor.navNodes[id]!.position)
           .toList();
     });
   }
@@ -248,7 +183,7 @@ _ImageRect _getImageRect(double containerWidth, double containerHeight) {
                   child: TextField(
                     controller: startController,
                     decoration: const InputDecoration(
-                      labelText: "Current Room",
+                      labelText: "Start Room #",
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -260,7 +195,7 @@ _ImageRect _getImageRect(double containerWidth, double containerHeight) {
                   child: TextField(
                     controller: endController,
                     decoration: const InputDecoration(
-                      labelText: "Destination Room",
+                      labelText: "End Room #",
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -276,6 +211,28 @@ _ImageRect _getImageRect(double containerWidth, double containerHeight) {
             ),
           ),
 
+          // Selection status bar
+          if (_selectedStart != null || _selectedEnd != null)
+            Container(
+              color: Colors.black87,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  _SelectionChip(
+                    label: _selectedStart != null ? 'Start: $_selectedStart' : 'Tap a room',
+                    color: Colors.tealAccent,
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward, color: Colors.white54, size: 16),
+                  const SizedBox(width: 8),
+                  _SelectionChip(
+                    label: _selectedEnd != null ? 'End: $_selectedEnd' : 'Tap a room',
+                    color: Colors.redAccent,
+                  ),
+                ],
+              ),
+            ),
+
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -287,46 +244,60 @@ _ImageRect _getImageRect(double containerWidth, double containerHeight) {
                   maxScale: 5,
                   minScale: 1,
 
-                  child: Stack(
-                    children: [
-                      /// MAP IMAGE
-                      SizedBox(
-                        width:  containerWidth,
-                        height: containerHeight,
-                        child: Image.asset(
-                          "assets/map.png",
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-
-                      /// ROUTE
-                      CustomPaint(
-                        size: Size(containerWidth, containerHeight),
-                        painter: PathPainter(
-                          routePoints
-                              .map((p) => _pixelToScreen(p, rect))
-                              .toList(),
-                        ),
-                      ),
-
-                      /// DEBUG NODE DOTS
-                      ...nodes.values.map((node) {
-                        final screen = _pixelToScreen(node.position, rect);
-
-                        return Positioned(
-                          left: screen.dx - 6,
-                          top:  screen.dy - 6,
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTapUp: (d) => _handleMapTap(d.localPosition, rect),
+                    child: Stack(
+                      children: [
+                        /// MAP IMAGE
+                        SizedBox(
+                          width:  containerWidth,
+                          height: containerHeight,
+                          child: Image.asset(
+                            "assets/map.png",
+                            fit: BoxFit.contain,
                           ),
-                        );
-                      }),
-                    ],
+                        ),
+
+                        /// ROOM POLYGONS
+                        CustomPaint(
+                          size: Size(containerWidth, containerHeight),
+                          painter: RoomPolygonPainter(
+                            rooms:           _floor.rooms,
+                            rect:            rect,
+                            selectedStartId: _selectedStart,
+                            selectedEndId:   _selectedEnd,
+                          ),
+                        ),
+
+                        /// ROUTE
+                        CustomPaint(
+                          size: Size(containerWidth, containerHeight),
+                          painter: PathPainter(
+                            routePoints
+                                .map((p) => _pixelToScreen(p, rect))
+                                .toList(),
+                          ),
+                        ),
+
+                        /// DEBUG NODES — remove once routing is verified
+                        ..._floor.navNodes.values.map((node) {
+                          final screen = _pixelToScreen(node.position, rect);
+                          return Positioned(
+                            left: screen.dx - 6,
+                            top:  screen.dy - 6,
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -343,8 +314,8 @@ class _ImageRect {
   final double offsetY;
   final double renderedWidth;
   final double renderedHeight;
-  final double nativeWidth;   // ← added
-  final double nativeHeight;  // ← added
+  final double nativeWidth;
+  final double nativeHeight;
 
   const _ImageRect({
     required this.offsetX,
@@ -354,6 +325,87 @@ class _ImageRect {
     required this.nativeWidth,
     required this.nativeHeight,
   });
+}
+
+/// Draws room polygon outlines over the map image.
+/// Converts each polygon's pixel coords to screen coords using the
+/// same letterbox math as _pixelToScreen.
+class RoomPolygonPainter extends CustomPainter {
+  final List<RoomPolygon> rooms;
+  final _ImageRect        rect;
+  final String?           selectedStartId;
+  final String?           selectedEndId;
+
+  const RoomPolygonPainter({
+    required this.rooms,
+    required this.rect,
+    this.selectedStartId,
+    this.selectedEndId,
+  });
+
+  Offset _toScreen(Offset pixel) {
+    return Offset(
+      rect.offsetX + (pixel.dx / rect.nativeWidth)  * rect.renderedWidth,
+      rect.offsetY + (pixel.dy / rect.nativeHeight) * rect.renderedHeight,
+    );
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final room in rooms) {
+      final isStart = room.id == selectedStartId;
+      final isEnd   = room.id == selectedEndId;
+
+      final fillColor = isStart
+          ? Colors.tealAccent.withAlpha(80)
+          : isEnd
+              ? Colors.redAccent.withAlpha(80)
+              : Colors.cyan.withAlpha(40);
+
+      final strokeColor = isStart
+          ? Colors.tealAccent
+          : isEnd
+              ? Colors.redAccent
+              : Colors.cyanAccent;
+
+      final pts = room.pixels.map(_toScreen).toList();
+      final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+      for (final pt in pts.skip(1)) path.lineTo(pt.dx, pt.dy);
+      path.close();
+
+      canvas.drawPath(path, Paint()..color = fillColor..style = PaintingStyle.fill);
+      canvas.drawPath(path, Paint()
+        ..color = strokeColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isStart || isEnd ? 2.5 : 1.5);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant RoomPolygonPainter old) =>
+      old.rect            != rect ||
+      old.selectedStartId != selectedStartId ||
+      old.selectedEndId   != selectedEndId;
+}
+
+class _SelectionChip extends StatelessWidget {
+  final String label;
+  final Color  color;
+  const _SelectionChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color:        color.withAlpha(30),
+        border:       Border.all(color: color.withAlpha(150)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(label,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+    );
+  }
 }
 
 class PathPainter extends CustomPainter {
