@@ -5,28 +5,6 @@ import 'package:flutter/material.dart';
 import '../models/building.dart';
 import '../theme.dart';
 
-class BuildingMap extends StatefulWidget {
-  final BuildingFloor floor;
-  final List<NodePosition> path;
-  final int highlightStep;
-  final String? startId;
-  final String? endId;
-  final ValueChanged<BuildingNode>? onNodeTap; // null = read-only navigation mode
-
-  const BuildingMap({
-    Key? key,
-    required this.floor,
-    required this.path,
-    required this.highlightStep,
-    this.startId,
-    this.endId,
-    this.onNodeTap,
-  }) : super(key: key);
-
-  @override
-  State<BuildingMap> createState() => _BuildingMapState();
-}
-
 class _BuildingMapState extends State<BuildingMap>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulse;
@@ -91,7 +69,7 @@ class _BuildingMapState extends State<BuildingMap>
               height: mapHeight * scale,
               child: Stack(
                 children: [
-                  // 1. Blueprint Floor Plan Background Image Layer
+                  // 1. Floor Map / indoor Background Image Layer
                   Positioned.fill(
                     child: Image.asset(
                       widget.floor.imagePath,
@@ -101,7 +79,7 @@ class _BuildingMapState extends State<BuildingMap>
                           color: Theme.of(context).colorScheme.surfaceVariant,
                           child: Center(
                             child: Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(0.0),
                               child: Text(
                                 'Missing background asset:\n${widget.floor.imagePath}',
                                 style: const TextStyle(color: Colors.redAccent, fontSize: 10),
@@ -113,7 +91,6 @@ class _BuildingMapState extends State<BuildingMap>
                       },
                     ),
                   ),
-
                   // 2. Continuous Path Vector Overlay (Draws lines between graph nodes)
                   Positioned.fill(
                     child: CustomPaint(
@@ -128,69 +105,69 @@ class _BuildingMapState extends State<BuildingMap>
 
                   // 3. Interactive Room Buttons & Selectors
                   ...widget.floor.nodes.values.map((node) {
-                    final pos = toCanvas(node.x, node.y);
-                    final isStart = widget.startId == node.id;
-                    final isEnd = widget.endId == node.id;
-                    final isOnPath = pathNodeIds.contains(node.id);
+                  final pos = toCanvas(node.x, node.y);
+                  final isStart = widget.startId == node.id;
+                  final isEnd = widget.endId == node.id;
+                  final isOnPath = pathNodeIds.contains(node.id);
 
-                    // Hallways are kept completely transparent as background lines do the work
-                    if (node.type == NodeType.hallway) return const SizedBox.shrink();
+                  // Hallways are kept completely transparent as background lines do the work
+                  if (node.type == NodeType.hallway) return const SizedBox.shrink();
 
-                    // Style configs fetched from your theme palette
-                    Color nodeColor = Palette.cellRoom(context).withOpacity(0.85);
-                    Color borderColor = Palette.cellRoomBorder(context);
-                    Color textColor = Palette.cellRoomText(context);
+                  // Style configs fetched from your theme palette
+                  Color nodeColor = Palette.cellRoom(context).withOpacity(0.85);
+                  Color borderColor = Palette.cellRoomBorder(context);
+                  Color textColor = Palette.cellRoomText(context);
 
-                    if (isStart) {
-                      nodeColor = Palette.cellRoomStart;
-                      borderColor = Palette.cellRoomStartBorder;
-                      textColor = Colors.white;
-                    } else if (isEnd) {
-                      nodeColor = Palette.cellRoomEnd;
-                      borderColor = Palette.cellRoomEndBorder;
-                      textColor = Colors.white;
-                    } else if (isOnPath) {
-                      nodeColor = Palette.cellRoomPath(context);
-                      borderColor = Palette.cellRoomPathBorder(context);
-                      textColor = Colors.white;
-                    }
+                  if (isStart) {
+                    nodeColor = Palette.cellRoomStart;
+                    borderColor = Palette.cellRoomStartBorder;
+                    textColor = Colors.white;
+                  } else if (isEnd) {
+                    nodeColor = Palette.cellRoomEnd;
+                    borderColor = Palette.cellRoomEndBorder;
+                    textColor = Colors.white;
+                  } else if (isOnPath) {
+                    nodeColor = Palette.cellRoomPath(context);
+                    borderColor = Palette.cellRoomPathBorder(context);
+                    textColor = Colors.white;
+                  }
 
-                    final double radius = node.type == NodeType.room ? 16.0 : 14.0;
+                  final double radius = node.type == NodeType.room ? 16.0 : 14.0;
 
-                    return Positioned(
-                      left: pos.dx - radius,
-                      top: pos.dy - radius,
-                      child: GestureDetector(
-                        onTap: widget.onNodeTap != null ? () => widget.onNodeTap!(node) : null,
-                        child: Container(
-                          width: radius * 2,
-                          height: radius * 2,
-                          decoration: BoxDecoration(
-                            color: nodeColor,
-                            shape: node.type == NodeType.room ? BoxShape.rectangle : BoxShape.circle,
-                            borderRadius: node.type == NodeType.room ? BorderRadius.circular(4) : null,
-                            border: Border.all(color: borderColor, width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              node.label,
-                              style: TextStyle(
-                                fontSize: 8.0,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                              ),
+                  return Positioned(
+                    left: pos.dx - radius,
+                    top: pos.dy - radius,
+                    child: GestureDetector(
+                      onTap: widget.onNodeTap != null ? () => widget.onNodeTap!(node) : null,
+                      child: Container(
+                        width: radius * 2,
+                        height: radius * 2,
+                        decoration: BoxDecoration(
+                          color: nodeColor,
+                          shape: node.type == NodeType.room ? BoxShape.rectangle : BoxShape.circle,
+                          borderRadius: node.type == NodeType.room ? BorderRadius.circular(4) : null,
+                          border: Border.all(color: borderColor, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            node.label,
+                            style: TextStyle(
+                              fontSize: 8.0,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
                             ),
                           ),
                         ),
                       ),
-                    );
+                    ),
+                  );
                   }),
 
                   // 4. Current Target Step Navigation Location Pulse Dot
@@ -228,6 +205,30 @@ class _BuildingMapState extends State<BuildingMap>
       },
     );
   }
+}
+
+class BuildingMap extends StatefulWidget {
+  final BuildingFloor floor;
+  final List<NodePosition> path;
+  final int highlightStep;
+  final String? startId;
+  final String? endId;
+  final ValueChanged<BuildingNode>? onNodeTap; // null = read-only navigation mode
+  bool indoor;
+
+  BuildingMap({
+    Key? key,
+    required this.floor,
+    required this.path,
+    required this.highlightStep,
+    required this.indoor,
+    this.startId,
+    this.endId,
+    this.onNodeTap,
+  }) : super(key: key);
+
+  @override
+  State<BuildingMap> createState() => _BuildingMapState();
 }
 
 class _EdgePainter extends CustomPainter {

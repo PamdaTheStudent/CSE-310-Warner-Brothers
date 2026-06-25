@@ -29,6 +29,10 @@ class _IndoorViewState extends State<IndoorView>
     super.dispose();
   }
 
+  String imageName(int stepnum){
+    return widget.path[stepnum].nodeId + widget.path[stepnum+1].nodeId;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -45,7 +49,7 @@ class _IndoorViewState extends State<IndoorView>
               child:
                 Positioned.fill( //indoor viewer
                   child: Image.asset(
-                    'assets/images/${widget.path[widget.highlightStep].nodeId}.png',
+                    'assets/images/${imageName(widget.highlightStep)}.png',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
