@@ -254,7 +254,7 @@ _ImageRect _getImageRect(double containerWidth, double containerHeight) {
                           width:  containerWidth,
                           height: containerHeight,
                           child: Image.asset(
-                            "assets/map.png",
+                            "assets/images/stc/floor_map/stc_3.png",
                             fit: BoxFit.contain,
                           ),
                         ),
