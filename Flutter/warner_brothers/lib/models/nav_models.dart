@@ -39,6 +39,10 @@ class FloorData {
   final List<RoomPolygon>      rooms;          // tappable room polygons
   final Map<String, NavNode>   navNodes;       // pathfinding graph
   final Map<String, String>    roomToNode;     // room id → nav node id
+  /// Outer perimeter of the building on this floor, in raw pixel coords.
+  /// Drawn as a stroke-only outline with no fill.
+  /// Trace this from the floor plan image and add the points here.
+  final List<Offset>?          buildingOutline;
 
   const FloorData({
     required this.floorNumber,
@@ -47,6 +51,7 @@ class FloorData {
     required this.rooms,
     required this.navNodes,
     required this.roomToNode,
+    this.buildingOutline,
   });
 }
 
