@@ -25,20 +25,19 @@ final FloorData _floor1 = FloorData(
   floorNumber: 1,
   name: 'Floor 1',
   imagePath: 'assets/images/stc_floor_1.png',
-  rooms: const [], // TODO: add RoomPolygon entries
-  navNodes: const {}, // TODO: add NavNode entries
-  roomToNode: const {}, // TODO: map room ids to nav node ids
+  rooms: const [],
+  navNodes: const {},
+  roomToNode: const <String, List<String>>{}, // TODO: add entries
 );
 
 // ── Floor 2 ───────────────────────────────────────────────────
-// Polygons and nav nodes to be added.
 final FloorData _floor2 = FloorData(
   floorNumber: 2,
   name: 'Floor 2',
   imagePath: 'assets/images/stc/floor_map/stc_floor_2.png',
   rooms: const [],
   navNodes: const {},
-  roomToNode: const {},
+  roomToNode: const <String, List<String>>{}, // TODO: add entries
 );
 
 // ── Floor 3 ───────────────────────────────────────────────────
@@ -597,59 +596,65 @@ final FloorData _floor3 = FloorData(
   },
 
   // ── Room → nav node mapping ─────────────────────────────────
-  // Keys are room numbers only (no building prefix).
-  // TODO: add entries for all rooms once nav nodes are placed above.
+  // Keys MUST match the room polygon IDs defined in the rooms list above.
+  // Rooms with two doors list both nodes — the router picks whichever
+  // gives the shorter path automatically.
   roomToNode: const {
-    '347': 'N1',
-    '341A': 'N2',
-    '341B': 'N4',
-    '353A': 'N7',
-    '353B': 'N8',
-    '361A': 'N9',
-    '361B': 'N10',
-    '367A': 'N11',
-    '367B': 'N12',
-    '342': 'N13',
-    '379': 'N14',
-    '385A': 'N15',
-    '375A': 'N16',
-    '385B': 'N17',
-    '394A': 'N19',
-    '394B': 'N20',
-    '398A': 'N22',
-    '398B': 'N23',
-    '376': 'N25',
-    '375B': 'N26',
-    '310D': 'N29',
-    '310C': 'N30',
-    '310B': 'N31',
-    '310A': 'N32',
-    '365A': 'N33',
-    '365B': 'N34',
-    '355': 'N35',
-    '357': 'N36',
-    '330G': 'N38',
-    '320M': 'N41',
-    '330M': 'N42',
-    '330R': 'N43',
-    '320J': 'N44',
-    '320F': 'N45',
-    '320B': 'N46',
-    '310X': 'N49',
-    '310U': 'N50',
-    '310S': 'N51',
-    '310Q': 'N52',
-    '310E': 'N53',
-    '310H': 'N54',
-    '310K': 'N55',
-    '310M': 'N56',
-    '310L': 'N57',
-    '393': 'N58',
-    '330F': 'N59',
-    '330A': 'N60',
-    '320W': 'N61',
-    '320V': 'N63',
-    '320S': 'N64',
-    '320P': 'N65',
+    // North row
+    '347':        ['N1', 'N2'],   // top door + hallway door
+    '341':        ['N2', 'N4'],   // two doors along west wall
+    '353':        ['N35', 'N36'], // two doors into main hallway
+    '361':        ['N9', 'N10'],  // left door + right door
+    '367':        ['N11', 'N12'], // left door + right door
+    '385':        ['N15', 'N17'], // two doors
+    '394':        ['N19', 'N20'], // two doors
+    '393':        ['N58'],
+
+    // Center corridor
+    '342':        ['N13'],
+    '356':        ['N13'],
+    '362':        ['N25'],
+    '367_south':  ['N25'],
+    '375':        ['N16', 'N26'], // two doors
+    '398':        ['N22', 'N23'], // two doors
+
+    // 310-series
+    '310A':  ['N32'],
+    '310B':  ['N31'],
+    '310C':  ['N30'],
+    '310D':  ['N29'],
+    '310E':  ['N53'],
+    '310H':  ['N54'],
+    '310K':  ['N55'],
+    '310L':  ['N57'],
+    '310M':  ['N56'],
+    '310P':  ['N53'],
+    '310Q':  ['N52'],
+    '310S':  ['N51'],
+    '310U':  ['N50'],
+    '310V':  ['N30'],
+    '310X':  ['N49'],
+    '310Z':  ['N32'],
+
+    // 320-series
+    '320A':  ['N43'],
+    '320B':  ['N46'],
+    '320F':  ['N45'],
+    '320J':  ['N44'],
+    '320M':  ['N41'],
+    '320P':  ['N65'],
+    '320R':  ['N64'],
+    '320S':  ['N64'],
+    '320V':  ['N63'],
+    '320W':  ['N61'],
+
+    // 330-series
+    '330A':  ['N60'],
+    '330F':  ['N59'],
+    '330G':  ['N38'],
+    '330J':  ['N41'],
+    '330M':  ['N42'],
+    '330P':  ['N44'],
+    '330R':  ['N43'],
   },
 );

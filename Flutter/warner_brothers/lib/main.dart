@@ -82,14 +82,22 @@ class _MapScreenState extends State<MapScreen> {
         if (room.id == _selectedStart) {
           _selectedStart = _selectedEnd;
           _selectedEnd   = null;
+          routePoints    = [];
+          _currentStep   = 0;
         } else if (room.id == _selectedEnd) {
           _selectedEnd = null;
+          routePoints  = [];
+          _currentStep = 0;
         } else if (_selectedStart == null) {
           _selectedStart = room.id;
         } else {
           _selectedEnd = room.id;
         }
       });
+      // Auto-route as soon as both endpoints are chosen
+      if (_selectedStart != null && _selectedEnd != null) {
+        generateRoute();
+      }
       return;
     }
   }
@@ -104,8 +112,8 @@ class _MapScreenState extends State<MapScreen> {
     while (queue.isNotEmpty) {
       final current = queue.removeFirst();
       if (current == goal) break;
-      for (final next in _floor.navNodes[current]!.neighbors) {
-        if (!cameFrom.containsKey(next)) {
+      for (final next in _floor.navNodes[current]?.neighbors ?? []) {
+        if (_floor.navNodes.containsKey(next) && !cameFrom.containsKey(next)) {
           queue.add(next);
           cameFrom[next] = current;
         }
@@ -121,30 +129,49 @@ class _MapScreenState extends State<MapScreen> {
     return path;
   }
 
-  String? _resolveRoom(String input) => _floor.roomToNode[input.trim()];
+  List<String> _resolveNodes(String roomId) =>
+      _floor.roomToNode[roomId.trim()] ?? [];
 
   void generateRoute() {
-    final startNode = _selectedStart != null
-        ? _resolveRoom(_selectedStart!)
-        : _resolveRoom(startController.text);
-    final endNode = _selectedEnd != null
-        ? _resolveRoom(_selectedEnd!)
-        : _resolveRoom(endController.text);
+    final startNodes = _selectedStart != null
+        ? _resolveNodes(_selectedStart!)
+        : _resolveNodes(startController.text);
+    final endNodes = _selectedEnd != null
+        ? _resolveNodes(_selectedEnd!)
+        : _resolveNodes(endController.text);
 
-    if (startNode == null || endNode == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(startNode == null
-            ? 'No start room selected'
-            : 'No destination room selected'),
+    if (startNodes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No start room selected'),
+        backgroundColor: Colors.redAccent,
+      ));
+      return;
+    }
+    if (endNodes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No destination room selected'),
         backgroundColor: Colors.redAccent,
       ));
       return;
     }
 
-    final nodePath = _findPath(startNode, endNode);
+    // Try every start-door × end-door combination; keep the shortest path.
+    List<String> bestPath = [];
+    for (final s in startNodes) {
+      for (final e in endNodes) {
+        final candidate = _findPath(s, e);
+        if (bestPath.isEmpty || candidate.length < bestPath.length) {
+          bestPath = candidate;
+        }
+      }
+    }
+
     setState(() {
-      routePoints   = nodePath.map((id) => _floor.navNodes[id]!.position).toList();
-      _currentStep  = 0;
+      routePoints = bestPath
+          .where((id) => _floor.navNodes.containsKey(id))
+          .map((id) => _floor.navNodes[id]!.position)
+          .toList();
+      _currentStep = 0;
     });
   }
 
@@ -237,21 +264,6 @@ class _MapScreenState extends State<MapScreen> {
                           accentColor: Palette.accent(context),
                         ),
                       ),
-
-                      // DEBUG nodes — remove once routing is verified
-                      ..._floor.navNodes.values.map((node) {
-                        final s = _pixelToScreen(node.position, rect);
-                        return Positioned(
-                          left: s.dx - 6, top: s.dy - 6,
-                          child: Container(
-                            width: 12, height: 12,
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        );
-                      }),
 
                       // Next / Prev step overlay (only shown when a route exists)
                       if (routePoints.isNotEmpty)

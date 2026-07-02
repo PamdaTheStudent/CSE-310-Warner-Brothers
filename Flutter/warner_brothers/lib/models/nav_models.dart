@@ -37,8 +37,8 @@ class FloorData {
   final String                 name;
   final String                 imagePath;      // asset path for the floor plan image
   final List<RoomPolygon>      rooms;          // tappable room polygons
-  final Map<String, NavNode>   navNodes;       // pathfinding graph
-  final Map<String, String>    roomToNode;     // room id → nav node id
+  final Map<String, NavNode>         navNodes;    // pathfinding graph
+  final Map<String, List<String>>   roomToNode;  // room id → one or more door nodes
   /// Outer perimeter of the building on this floor, in raw pixel coords.
   /// Drawn as a stroke-only outline with no fill.
   /// Trace this from the floor plan image and add the points here.
