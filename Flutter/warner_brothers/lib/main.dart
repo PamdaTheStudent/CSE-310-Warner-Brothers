@@ -4,6 +4,8 @@ import 'models/nav_models.dart';
 import 'data/stc_building.dart';
 import 'theme.dart';
 
+bool __indoor = false;
+
 void main() {
   runApp(const MyApp());
 }
@@ -53,6 +55,11 @@ class _MapScreenState extends State<MapScreen> {
   // Current step along the route (index into routePoints).
   int _currentStep = 0;
 
+  void switchView() {
+    setState(() {
+      __indoor = !__indoor;
+    });
+  }
   void _stepNext() {
     if (_currentStep < routePoints.length - 1) {
       setState(() => _currentStep++);
@@ -213,9 +220,10 @@ class _MapScreenState extends State<MapScreen> {
             ),
 
             // ── Selection bar: tapped room chips + view toggle ─
-            _SelectionBar(
+            SelectionBar(
               selectedStart: _selectedStart,
               selectedEnd:   _selectedEnd,
+              onPressed:     switchView
             ),
 
             // ── Map ───────────────────────────────────────────
@@ -236,7 +244,7 @@ class _MapScreenState extends State<MapScreen> {
                         width:  constraints.maxWidth,
                         height: constraints.maxHeight,
                         child: Image.asset(
-                          _floor.imagePath,
+                          __indoor ? "depression": _floor.imagePath,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) =>
                               const ColoredBox(color: Color(0xFF1E1E1E)),
@@ -412,11 +420,14 @@ class _TopBar extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────
 //  _SelectionBar  — shows tapped room selections
 // ─────────────────────────────────────────────────────────────
-class _SelectionBar extends StatelessWidget {
+
+
+class SelectionBar extends StatelessWidget {
   final String? selectedStart;
   final String? selectedEnd;
+  final VoidCallback onPressed;
 
-  const _SelectionBar({this.selectedStart, this.selectedEnd});
+  const SelectionBar({super.key, required this.onPressed, this.selectedStart, this.selectedEnd});
 
   @override
   Widget build(BuildContext context) {
@@ -448,9 +459,7 @@ class _SelectionBar extends StatelessWidget {
           // View toggle placeholder
           IconButton(
             icon: const Icon(Icons.view_carousel_outlined),
-            onPressed: () {
-              // TODO: toggle between map view and list view
-            },
+            onPressed: onPressed,
             tooltip: 'Change view',
           ),
         ],
@@ -523,7 +532,7 @@ class _BottomBar extends StatelessWidget {
           // Floor dropdown
           Expanded(
             child: DropdownButtonFormField<int>(
-              value: currentFloor,
+              initialValue: currentFloor,
               decoration: const InputDecoration(
                 border:      OutlineInputBorder(),
                 isDense:     true,
