@@ -2,37 +2,27 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'models/nav_models.dart';
 import 'data/stc_building.dart';
+import 'theme.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-// MyApp is stateful so the theme toggle can rebuild MaterialApp.
-class MyApp extends StatefulWidget {
+// MyApp listens to the global themeNotifier so any widget can toggle the theme.
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.dark;
-
-  void _toggleTheme() {
-    setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      themeMode: _themeMode,
-      theme:     ThemeData.light(useMaterial3: true),
-      darkTheme: ThemeData.dark(useMaterial3: true),
-      home: MapScreen(onToggleTheme: _toggleTheme),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, mode, __) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        themeMode: mode,
+        theme:     AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        home: const MapScreen(),
+      ),
     );
   }
 }
@@ -41,8 +31,7 @@ class _MyAppState extends State<MyApp> {
 //  MapScreen
 // ─────────────────────────────────────────────────────────────
 class MapScreen extends StatefulWidget {
-  final VoidCallback onToggleTheme;
-  const MapScreen({super.key, required this.onToggleTheme});
+  const MapScreen({super.key});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -58,8 +47,23 @@ class _MapScreenState extends State<MapScreen> {
   String? _selectedStart;
   String? _selectedEnd;
 
-  // Route overlay points (screen coords, rebuilt on each generateRoute call).
+  // Route overlay points (pixel coords, converted to screen at paint time).
   List<Offset> routePoints = [];
+
+  // Current step along the route (index into routePoints).
+  int _currentStep = 0;
+
+  void _stepNext() {
+    if (_currentStep < routePoints.length - 1) {
+      setState(() => _currentStep++);
+    }
+  }
+
+  void _stepPrev() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    }
+  }
 
   // Text input controllers (fallback when no room is tapped).
   final TextEditingController startController = TextEditingController();
@@ -139,9 +143,8 @@ class _MapScreenState extends State<MapScreen> {
 
     final nodePath = _findPath(startNode, endNode);
     setState(() {
-      routePoints = nodePath
-          .map((id) => _floor.navNodes[id]!.position)
-          .toList();
+      routePoints   = nodePath.map((id) => _floor.navNodes[id]!.position).toList();
+      _currentStep  = 0;
     });
   }
 
@@ -171,19 +174,15 @@ class _MapScreenState extends State<MapScreen> {
   // ── Build ────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
             // ── Top bar: search inputs + icons ────────────────
             _TopBar(
-              startController:  startController,
-              endController:    endController,
-              onSearch:         generateRoute,
-              onToggleTheme:    widget.onToggleTheme,
-              isDark:           isDark,
+              startController: startController,
+              endController:   endController,
+              onSearch:        generateRoute,
             ),
 
             // ── Selection bar: tapped room chips + view toggle ─
@@ -229,12 +228,14 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ),
 
-                      // Route line
+                      // Route line + current-step dot
                       CustomPaint(
                         size: Size(constraints.maxWidth, constraints.maxHeight),
-                        painter: PathPainter(routePoints
-                            .map((p) => _pixelToScreen(p, rect))
-                            .toList()),
+                        painter: PathPainter(
+                          points:      routePoints.map((p) => _pixelToScreen(p, rect)).toList(),
+                          currentStep: _currentStep,
+                          accentColor: Palette.accent(context),
+                        ),
                       ),
 
                       // DEBUG nodes — remove once routing is verified
@@ -251,6 +252,48 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         );
                       }),
+
+                      // Next / Prev step overlay (only shown when a route exists)
+                      if (routePoints.isNotEmpty)
+                        Positioned(
+                          bottom: 16,
+                          left: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _StepButton(
+                                icon:      Icons.arrow_back_rounded,
+                                label:     'Prev',
+                                onPressed: _currentStep > 0 ? _stepPrev : null,
+                              ),
+                              const SizedBox(width: 8),
+                              // Step counter pill
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color:        Palette.surface(context).withAlpha(220),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Palette.border(context)),
+                                ),
+                                child: Text(
+                                  'Step ${_currentStep + 1} / ${routePoints.length}',
+                                  style: TextStyle(
+                                    color:      Palette.textPrimary(context),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize:   14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _StepButton(
+                                icon:      Icons.arrow_forward_rounded,
+                                label:     'Next',
+                                onPressed: _currentStep < routePoints.length - 1 ? _stepNext : null,
+                              ),
+                            ],
+                          ),
+                        ),
                     ]),
                   ),
                 );
@@ -266,6 +309,7 @@ class _MapScreenState extends State<MapScreen> {
                 _selectedStart   = null;
                 _selectedEnd     = null;
                 routePoints      = [];
+                _currentStep     = 0;
               }),
             ),
           ],
@@ -282,24 +326,22 @@ class _TopBar extends StatelessWidget {
   final TextEditingController startController;
   final TextEditingController endController;
   final VoidCallback          onSearch;
-  final VoidCallback          onToggleTheme;
-  final bool                  isDark;
 
   const _TopBar({
     required this.startController,
     required this.endController,
     required this.onSearch,
-    required this.onToggleTheme,
-    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
+        color: Palette.surface(context),
         border: Border(
-          bottom: BorderSide(color: Theme.of(context).dividerColor),
+          bottom: BorderSide(color: Palette.border(context)),
         ),
       ),
       child: Row(
@@ -307,11 +349,13 @@ class _TopBar extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: startController,
-              decoration: const InputDecoration(
-                hintText:    'Search Box 1',
-                border:      OutlineInputBorder(),
+              style: TextStyle(color: Palette.textPrimary(context)),
+              decoration: InputDecoration(
+                hintText:    'Start room',
+                hintStyle:   TextStyle(color: Palette.textHint(context)),
+                border:      const OutlineInputBorder(),
                 isDense:     true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               ),
             ),
           ),
@@ -319,23 +363,32 @@ class _TopBar extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: endController,
-              decoration: const InputDecoration(
-                hintText:    'Search Box 2',
-                border:      OutlineInputBorder(),
+              style: TextStyle(color: Palette.textPrimary(context)),
+              decoration: InputDecoration(
+                hintText:    'Destination room',
+                hintStyle:   TextStyle(color: Palette.textHint(context)),
+                border:      const OutlineInputBorder(),
                 isDense:     true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               ),
             ),
           ),
           const SizedBox(width: 4),
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: Icon(Icons.search, color: Palette.accent(context)),
             onPressed: onSearch,
             tooltip: 'Find route',
           ),
+          // Theme toggle — writes directly to themeNotifier, no prop drilling
           IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-            onPressed: onToggleTheme,
+            icon: Icon(
+              isDark ? Icons.light_mode : Icons.dark_mode,
+              color: Palette.textSecondary(context),
+            ),
+            onPressed: () {
+              themeNotifier.value =
+                  isDark ? ThemeMode.light : ThemeMode.dark;
+            },
             tooltip: 'Toggle theme',
           ),
         ],
@@ -575,20 +628,95 @@ class RoomPolygonPainter extends CustomPainter {
 
 class PathPainter extends CustomPainter {
   final List<Offset> points;
-  PathPainter(this.points);
+  final int          currentStep;
+  final Color        accentColor;
+
+  PathPainter({
+    required this.points,
+    required this.currentStep,
+    required this.accentColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (points.isEmpty) return;
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (final pt in points.skip(1)) path.lineTo(pt.dx, pt.dy);
-    canvas.drawPath(path, Paint()
-      ..color      = Colors.blue
-      ..strokeWidth = 10
+
+    // Dim paint for the full route
+    final dimPaint = Paint()
+      ..color      = accentColor.withAlpha(80)
+      ..strokeWidth = 6
       ..strokeCap  = StrokeCap.round
-      ..style      = PaintingStyle.stroke);
+      ..style      = PaintingStyle.stroke;
+
+    // Bright paint for travelled portion (start → currentStep)
+    final brightPaint = Paint()
+      ..color      = accentColor
+      ..strokeWidth = 8
+      ..strokeCap  = StrokeCap.round
+      ..style      = PaintingStyle.stroke;
+
+    // Draw full route dim
+    final fullPath = Path()..moveTo(points.first.dx, points.first.dy);
+    for (final pt in points.skip(1)) fullPath.lineTo(pt.dx, pt.dy);
+    canvas.drawPath(fullPath, dimPaint);
+
+    // Draw travelled section bright
+    if (currentStep > 0) {
+      final travelPath = Path()..moveTo(points.first.dx, points.first.dy);
+      for (int i = 1; i <= currentStep && i < points.length; i++) {
+        travelPath.lineTo(points[i].dx, points[i].dy);
+      }
+      canvas.drawPath(travelPath, brightPaint);
+    }
+
+    // Draw pulsing dot at current step position
+    if (currentStep < points.length) {
+      final dot = points[currentStep];
+      canvas.drawCircle(dot, 10, Paint()..color = accentColor);
+      canvas.drawCircle(dot, 10, Paint()
+        ..color      = accentColor.withAlpha(60)
+        ..style      = PaintingStyle.stroke
+        ..strokeWidth = 4);
+    }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter old) => true;
+  bool shouldRepaint(covariant PathPainter old) =>
+      old.currentStep != currentStep || old.points != points;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  _StepButton  — Prev / Next overlay button
+// ─────────────────────────────────────────────────────────────
+class _StepButton extends StatelessWidget {
+  final IconData    icon;
+  final String      label;
+  final VoidCallback? onPressed;
+
+  const _StepButton({
+    required this.icon,
+    required this.label,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon:  Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor:         enabled
+            ? Palette.accent(context)
+            : Palette.surface(context).withAlpha(200),
+        foregroundColor:         enabled
+            ? Palette.scaffold(context)
+            : Palette.textDisabled(context),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: enabled ? 4 : 0,
+      ),
+    );
+  }
 }
