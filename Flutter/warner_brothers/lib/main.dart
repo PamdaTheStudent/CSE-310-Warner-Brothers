@@ -45,14 +45,16 @@ class _MapScreenState extends State<MapScreen> {
   int   _currentFloorNum = 3;
   FloorData get _floor  => _building.floor(_currentFloorNum)!;
 
-  // Tapped room selections.
+  // Tapped room selections and the floor each was selected on.
   String? _selectedStart;
   String? _selectedEnd;
+  int?    _selectedStartFloor;
+  int?    _selectedEndFloor;
 
-  // Route overlay points (pixel coords, converted to screen at paint time).
-  List<Offset> routePoints = [];
+  // Resolved route — each step carries its floor so the map auto-switches.
+  List<PathStep> _pathSteps = [];
 
-  // Current step along the route (index into routePoints).
+  // Index of the step the user is currently viewing.
   int _currentStep = 0;
 
   void switchView() {
@@ -61,14 +63,20 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
   void _stepNext() {
-    if (_currentStep < routePoints.length - 1) {
-      setState(() => _currentStep++);
+    if (_currentStep < _pathSteps.length - 1) {
+      setState(() {
+        _currentStep++;
+        _currentFloorNum = _pathSteps[_currentStep].floor;
+      });
     }
   }
 
   void _stepPrev() {
     if (_currentStep > 0) {
-      setState(() => _currentStep--);
+      setState(() {
+        _currentStep--;
+        _currentFloorNum = _pathSteps[_currentStep].floor;
+      });
     }
   }
 
@@ -87,18 +95,23 @@ class _MapScreenState extends State<MapScreen> {
 
       setState(() {
         if (room.id == _selectedStart) {
-          _selectedStart = _selectedEnd;
-          _selectedEnd   = null;
-          routePoints    = [];
-          _currentStep   = 0;
+          _selectedStart      = _selectedEnd;
+          _selectedStartFloor = _selectedEndFloor;
+          _selectedEnd        = null;
+          _selectedEndFloor   = null;
+          _pathSteps          = [];
+          _currentStep        = 0;
         } else if (room.id == _selectedEnd) {
-          _selectedEnd = null;
-          routePoints  = [];
-          _currentStep = 0;
+          _selectedEnd      = null;
+          _selectedEndFloor = null;
+          _pathSteps        = [];
+          _currentStep      = 0;
         } else if (_selectedStart == null) {
-          _selectedStart = room.id;
+          _selectedStart      = room.id;
+          _selectedStartFloor = _currentFloorNum;
         } else {
-          _selectedEnd = room.id;
+          _selectedEnd      = room.id;
+          _selectedEndFloor = _currentFloorNum;
         }
       });
       // Auto-route as soon as both endpoints are chosen
@@ -110,51 +123,79 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   // ── Pathfinding ─────────────────────────────────────────────
-  List<String> _findPath(String start, String goal) {
-    final queue    = Queue<String>();
-    final cameFrom = <String, String?>{};
+  // BFS over the entire building graph, crossing floors via CrossFloorLinks.
+  List<PathStep> _findBuildingPath(_NodeRef start, _NodeRef goal) {
+    final queue    = Queue<_NodeRef>();
+    final cameFrom = <_NodeRef, _NodeRef?>{};
     queue.add(start);
     cameFrom[start] = null;
 
     while (queue.isNotEmpty) {
       final current = queue.removeFirst();
       if (current == goal) break;
-      for (final next in _floor.navNodes[current]?.neighbors ?? []) {
-        if (_floor.navNodes.containsKey(next) && !cameFrom.containsKey(next)) {
+
+      final floorData = _building.floor(current.floor);
+      final node = floorData?.navNodes[current.nodeId];
+      if (node == null) continue;
+
+      // Same-floor neighbors
+      for (final neighborId in node.neighbors) {
+        if (!(floorData!.navNodes.containsKey(neighborId))) continue;
+        final next = _NodeRef(current.floor, neighborId);
+        if (!cameFrom.containsKey(next)) {
           queue.add(next);
           cameFrom[next] = current;
         }
       }
+
+      // Cross-floor links (stairs / elevators)
+      for (final link in _building.crossFloorLinks) {
+        if (link.fromFloor == current.floor && link.fromNodeId == current.nodeId) {
+          final next = _NodeRef(link.toFloor, link.toNodeId);
+          if (!cameFrom.containsKey(next)) {
+            queue.add(next);
+            cameFrom[next] = current;
+          }
+        }
+      }
     }
 
-    final path = <String>[];
-    String? cur = goal;
+    // Reconstruct path
+    final steps = <PathStep>[];
+    _NodeRef? cur = goal;
     while (cur != null) {
-      path.insert(0, cur);
+      final pos = _building.floor(cur.floor)?.navNodes[cur.nodeId]?.position;
+      if (pos != null) {
+        steps.insert(0, PathStep(floor: cur.floor, nodeId: cur.nodeId, position: pos));
+      }
       cur = cameFrom[cur];
     }
-    return path;
+    return steps;
   }
 
-  List<String> _resolveNodes(String roomId) =>
-      _floor.roomToNode[roomId.trim()] ?? [];
+  List<_NodeRef> _resolveNodeRefs(String roomId, int floor) {
+    final floorData = _building.floor(floor);
+    return (floorData?.roomToNode[roomId.trim()] ?? [])
+        .map((id) => _NodeRef(floor, id))
+        .toList();
+  }
 
   void generateRoute() {
-    final startNodes = _selectedStart != null
-        ? _resolveNodes(_selectedStart!)
-        : _resolveNodes(startController.text);
-    final endNodes = _selectedEnd != null
-        ? _resolveNodes(_selectedEnd!)
-        : _resolveNodes(endController.text);
+    final startRefs = _selectedStart != null
+        ? _resolveNodeRefs(_selectedStart!, _selectedStartFloor ?? _currentFloorNum)
+        : _resolveNodeRefs(startController.text, _currentFloorNum);
+    final endRefs = _selectedEnd != null
+        ? _resolveNodeRefs(_selectedEnd!, _selectedEndFloor ?? _currentFloorNum)
+        : _resolveNodeRefs(endController.text, _currentFloorNum);
 
-    if (startNodes.isEmpty) {
+    if (startRefs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('No start room selected'),
         backgroundColor: Colors.redAccent,
       ));
       return;
     }
-    if (endNodes.isEmpty) {
+    if (endRefs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('No destination room selected'),
         backgroundColor: Colors.redAccent,
@@ -163,23 +204,43 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     // Try every start-door × end-door combination; keep the shortest path.
-    List<String> bestPath = [];
-    for (final s in startNodes) {
-      for (final e in endNodes) {
-        final candidate = _findPath(s, e);
-        if (bestPath.isEmpty || candidate.length < bestPath.length) {
-          bestPath = candidate;
-        }
+    List<PathStep> best = [];
+    for (final s in startRefs) {
+      for (final e in endRefs) {
+        final candidate = _findBuildingPath(s, e);
+        if (best.isEmpty || candidate.length < best.length) best = candidate;
       }
     }
 
     setState(() {
-      routePoints = bestPath
-          .where((id) => _floor.navNodes.containsKey(id))
-          .map((id) => _floor.navNodes[id]!.position)
-          .toList();
+      _pathSteps   = best;
       _currentStep = 0;
+      if (best.isNotEmpty) _currentFloorNum = best.first.floor;
     });
+  }
+
+  // ── Path painter helper ─────────────────────────────────────
+  // Filters _pathSteps to the current floor and builds the painter.
+  PathPainter _buildPathPainter(_ImageRect rect, BuildContext ctx) {
+    final points      = <Offset>[];
+    int  travelled    = 0;
+    Offset? dot;
+
+    for (int i = 0; i < _pathSteps.length; i++) {
+      final step = _pathSteps[i];
+      if (step.floor != _currentFloorNum) continue;
+      final sp = _pixelToScreen(step.position, rect);
+      points.add(sp);
+      if (i <= _currentStep) travelled++;
+      if (i == _currentStep) dot = sp;
+    }
+
+    return PathPainter(
+      points:      points,
+      travelled:   travelled,
+      currentDot:  dot,
+      accentColor: Palette.accent(ctx),
+    );
   }
 
   // ── Coordinate helpers ──────────────────────────────────────
@@ -189,9 +250,9 @@ class _MapScreenState extends State<MapScreen> {
       );
 
   _ImageRect _getImageRect(double w, double h) {
-    const double nW = 1201;
-    const double nH = 666;
-    const double aspect = nW / nH;
+    final double nW = _floor.nativeWidth;
+    final double nH = _floor.nativeHeight;
+    final double aspect = nW / nH;
     final double rW, rH;
     if (w / h > aspect) {
       rH = h; rW = h * aspect;
@@ -244,7 +305,12 @@ class _MapScreenState extends State<MapScreen> {
                         width:  constraints.maxWidth,
                         height: constraints.maxHeight,
                         child: Image.asset(
+<<<<<<< Updated upstream
                           __indoor ? "depression": _floor.imagePath,
+=======
+                          key: ValueKey(_floor.imagePath),
+                          _floor.imagePath,
+>>>>>>> Stashed changes
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) =>
                               const ColoredBox(color: Color(0xFF1E1E1E)),
@@ -263,18 +329,14 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ),
 
-                      // Route line + current-step dot
+                      // Route line + current-step dot (current floor only)
                       CustomPaint(
                         size: Size(constraints.maxWidth, constraints.maxHeight),
-                        painter: PathPainter(
-                          points:      routePoints.map((p) => _pixelToScreen(p, rect)).toList(),
-                          currentStep: _currentStep,
-                          accentColor: Palette.accent(context),
-                        ),
+                        painter: _buildPathPainter(rect, context),
                       ),
 
                       // Next / Prev step overlay (only shown when a route exists)
-                      if (routePoints.isNotEmpty)
+                      if (_pathSteps.isNotEmpty)
                         Positioned(
                           bottom: 16,
                           left: 0,
@@ -297,7 +359,7 @@ class _MapScreenState extends State<MapScreen> {
                                   border: Border.all(color: Palette.border(context)),
                                 ),
                                 child: Text(
-                                  'Step ${_currentStep + 1} / ${routePoints.length}',
+                                  'Step ${_currentStep + 1} / ${_pathSteps.length}',
                                   style: TextStyle(
                                     color:      Palette.textPrimary(context),
                                     fontWeight: FontWeight.bold,
@@ -309,7 +371,7 @@ class _MapScreenState extends State<MapScreen> {
                               _StepButton(
                                 icon:      Icons.arrow_forward_rounded,
                                 label:     'Next',
-                                onPressed: _currentStep < routePoints.length - 1 ? _stepNext : null,
+                                onPressed: _currentStep < _pathSteps.length - 1 ? _stepNext : null,
                               ),
                             ],
                           ),
@@ -326,9 +388,7 @@ class _MapScreenState extends State<MapScreen> {
               currentFloor:   _currentFloorNum,
               onFloorChanged: (f) => setState(() {
                 _currentFloorNum = f;
-                _selectedStart   = null;
-                _selectedEnd     = null;
-                routePoints      = [];
+                _pathSteps       = [];
                 _currentStep     = 0;
               }),
             ),
@@ -618,17 +678,31 @@ class RoomPolygonPainter extends CustomPainter {
       );
     }
 
-    // Room polygons
+    // Room / staircase / elevator polygons
     for (final room in rooms) {
       final isStart = room.id == selectedStartId;
       final isEnd   = room.id == selectedEndId;
 
+      // Base color by area type; selection overrides to teal/red
+      final Color baseFill, baseStroke;
+      switch (room.type) {
+        case AreaType.staircase:
+          baseFill   = Colors.purple.withAlpha(60);
+          baseStroke = Colors.purpleAccent;
+        case AreaType.elevator:
+          baseFill   = Colors.amber.withAlpha(60);
+          baseStroke = Colors.amberAccent;
+        case AreaType.room:
+          baseFill   = Colors.cyan.withAlpha(40);
+          baseStroke = Colors.cyanAccent;
+      }
+
       final fillColor   = isStart ? Colors.tealAccent.withAlpha(80)
                         : isEnd   ? Colors.redAccent.withAlpha(80)
-                        :           Colors.cyan.withAlpha(40);
+                        : baseFill;
       final strokeColor = isStart ? Colors.tealAccent
                         : isEnd   ? Colors.redAccent
-                        :           Colors.cyanAccent;
+                        : baseStroke;
 
       final path = _makePath(room.pixels);
       canvas.drawPath(path,
@@ -649,52 +723,51 @@ class RoomPolygonPainter extends CustomPainter {
 
 class PathPainter extends CustomPainter {
   final List<Offset> points;
-  final int          currentStep;
+  final int          travelled;   // how many points in the list are already done
+  final Offset?      currentDot;  // screen pos of the step dot, null if off this floor
   final Color        accentColor;
 
   PathPainter({
     required this.points,
-    required this.currentStep,
+    required this.travelled,
     required this.accentColor,
+    this.currentDot,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (points.isEmpty) return;
 
-    // Dim paint for the full route
     final dimPaint = Paint()
       ..color      = accentColor.withAlpha(80)
       ..strokeWidth = 6
       ..strokeCap  = StrokeCap.round
       ..style      = PaintingStyle.stroke;
 
-    // Bright paint for travelled portion (start → currentStep)
     final brightPaint = Paint()
       ..color      = accentColor
       ..strokeWidth = 8
       ..strokeCap  = StrokeCap.round
       ..style      = PaintingStyle.stroke;
 
-    // Draw full route dim
+    // Full route dim
     final fullPath = Path()..moveTo(points.first.dx, points.first.dy);
     for (final pt in points.skip(1)) fullPath.lineTo(pt.dx, pt.dy);
     canvas.drawPath(fullPath, dimPaint);
 
-    // Draw travelled section bright
-    if (currentStep > 0) {
+    // Travelled section bright
+    if (travelled > 1) {
       final travelPath = Path()..moveTo(points.first.dx, points.first.dy);
-      for (int i = 1; i <= currentStep && i < points.length; i++) {
+      for (int i = 1; i < travelled; i++) {
         travelPath.lineTo(points[i].dx, points[i].dy);
       }
       canvas.drawPath(travelPath, brightPaint);
     }
 
-    // Draw pulsing dot at current step position
-    if (currentStep < points.length) {
-      final dot = points[currentStep];
-      canvas.drawCircle(dot, 10, Paint()..color = accentColor);
-      canvas.drawCircle(dot, 10, Paint()
+    // Current position dot
+    if (currentDot != null) {
+      canvas.drawCircle(currentDot!, 10, Paint()..color = accentColor);
+      canvas.drawCircle(currentDot!, 10, Paint()
         ..color      = accentColor.withAlpha(60)
         ..style      = PaintingStyle.stroke
         ..strokeWidth = 4);
@@ -703,7 +776,22 @@ class PathPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant PathPainter old) =>
-      old.currentStep != currentStep || old.points != points;
+      old.travelled != travelled || old.currentDot != currentDot || old.points != points;
+}
+
+// ── _NodeRef ─────────────────────────────────────────────────
+// A (floor, nodeId) pair used as BFS state for cross-floor routing.
+class _NodeRef {
+  final int    floor;
+  final String nodeId;
+  const _NodeRef(this.floor, this.nodeId);
+
+  @override
+  bool operator ==(Object o) =>
+      o is _NodeRef && o.floor == floor && o.nodeId == nodeId;
+
+  @override
+  int get hashCode => Object.hash(floor, nodeId);
 }
 
 // ─────────────────────────────────────────────────────────────
