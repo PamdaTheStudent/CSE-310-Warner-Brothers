@@ -207,9 +207,15 @@ class _MapScreenState extends State<MapScreen> {
           children: [
             // ── Top bar: search inputs + icons ────────────────
             _TopBar(
-              startController: startController,
-              endController:   endController,
-              onSearch:        generateRoute,
+              roomOptions: _floor.rooms.map((r) => r.id).toList(),
+              onStartChanged: (value) {
+                // Stores text into the search target
+                startController.text = value; 
+              },
+              onEndChanged: (value) {
+                endController.text = value;
+              },
+              onSearch: generateRoute,
             ),
 
             // ── Selection bar: tapped room chips + view toggle ─
@@ -335,19 +341,22 @@ class _MapScreenState extends State<MapScreen> {
 //  _TopBar
 // ─────────────────────────────────────────────────────────────
 class _TopBar extends StatelessWidget {
-  final TextEditingController startController;
-  final TextEditingController endController;
+  final ValueChanged<String> onStartChanged;
+  final ValueChanged<String> onEndChanged;
   final VoidCallback          onSearch;
+  final List<String>          roomOptions; // Pass all valid room IDs here
 
   const _TopBar({
-    required this.startController,
-    required this.endController,
+    required this.onStartChanged,
+    required this.onEndChanged,
     required this.onSearch,
+    required this.roomOptions,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -358,31 +367,65 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // ── Start Room Autocomplete ─────────────────
           Expanded(
-            child: TextField(
-              controller: startController,
-              style: TextStyle(color: Palette.textPrimary(context)),
-              decoration: InputDecoration(
-                hintText:    'Start room',
-                hintStyle:   TextStyle(color: Palette.textHint(context)),
-                border:      const OutlineInputBorder(),
-                isDense:     true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              ),
+            child: Autocomplete<String>(
+              optionsBuilder: (TextEditingValue textEditingValue) {
+                if (textEditingValue.text.isEmpty) {
+                  return const Iterable<String>.empty();
+                }
+                return roomOptions.where((String option) {
+                  return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                });
+              },
+              onSelected: onStartChanged,
+              fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                // Keep parent state updated if they type manually without clicking a suggestion
+                textController.addListener(() => onStartChanged(textController.text));
+                return TextField(
+                  controller: textController,
+                  focusNode: focusNode,
+                  style: TextStyle(color: Palette.textPrimary(context)),
+                  decoration: InputDecoration(
+                    hintText: 'Start room',
+                    hintStyle: TextStyle(color: Palette.textHint(context)),
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(width: 8),
+          
+          // ── Destination Room Autocomplete ────────────
           Expanded(
-            child: TextField(
-              controller: endController,
-              style: TextStyle(color: Palette.textPrimary(context)),
-              decoration: InputDecoration(
-                hintText:    'Destination room',
-                hintStyle:   TextStyle(color: Palette.textHint(context)),
-                border:      const OutlineInputBorder(),
-                isDense:     true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              ),
+            child: Autocomplete<String>(
+              optionsBuilder: (TextEditingValue textEditingValue) {
+                if (textEditingValue.text.isEmpty) {
+                  return const Iterable<String>.empty();
+                }
+                return roomOptions.where((String option) {
+                  return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                });
+              },
+              onSelected: onEndChanged,
+              fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                textController.addListener(() => onEndChanged(textController.text));
+                return TextField(
+                  controller: textController,
+                  focusNode: focusNode,
+                  style: TextStyle(color: Palette.textPrimary(context)),
+                  decoration: InputDecoration(
+                    hintText: 'Destination room',
+                    hintStyle: TextStyle(color: Palette.textHint(context)),
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(width: 4),
@@ -391,15 +434,13 @@ class _TopBar extends StatelessWidget {
             onPressed: onSearch,
             tooltip: 'Find route',
           ),
-          // Theme toggle — writes directly to themeNotifier, no prop drilling
           IconButton(
             icon: Icon(
               isDark ? Icons.light_mode : Icons.dark_mode,
               color: Palette.textSecondary(context),
             ),
             onPressed: () {
-              themeNotifier.value =
-                  isDark ? ThemeMode.light : ThemeMode.dark;
+              themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
             },
             tooltip: 'Toggle theme',
           ),
