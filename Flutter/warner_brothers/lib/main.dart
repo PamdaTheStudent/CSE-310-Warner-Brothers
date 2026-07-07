@@ -305,12 +305,8 @@ class _MapScreenState extends State<MapScreen> {
                         width:  constraints.maxWidth,
                         height: constraints.maxHeight,
                         child: Image.asset(
-<<<<<<< Updated upstream
-                          __indoor ? "depression": _floor.imagePath,
-=======
                           key: ValueKey(_floor.imagePath),
                           _floor.imagePath,
->>>>>>> Stashed changes
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) =>
                               const ColoredBox(color: Color(0xFF1E1E1E)),

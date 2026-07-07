@@ -36,6 +36,14 @@ final BuildingData stcBuilding = BuildingData(
     // East elevator (floor 3 ↔ floor 2)
     CrossFloorLink(fromFloor: 3, fromNodeId: 'N_elevE',  toFloor: 2, toNodeId: 'F2_elevE'),
     CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_elevE', toFloor: 3, toNodeId: 'N_elevE'),
+
+    // West staircase (floor 2 ↔ floor 1) — both directions
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_stairW', toFloor: 1, toNodeId: 'F1_stairW'),
+    CrossFloorLink(fromFloor: 1, fromNodeId: 'F1_stairW', toFloor: 2, toNodeId: 'F2_stairW'),
+
+    // West elevator (floor 2 ↔ floor 1)
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_elevW',  toFloor: 1, toNodeId: 'F1_elevW'),
+    CrossFloorLink(fromFloor: 1, fromNodeId: 'F1_elevW',  toFloor: 2, toNodeId: 'F2_elevW'),
   ],
 );
 
@@ -47,9 +55,110 @@ final FloorData _floor1 = FloorData(
   imagePath: 'assets/images/stc/floor_map/stc_1.png',
   nativeWidth:  1479.0,
   nativeHeight: 883.0,
-  rooms: const [],
-  navNodes: const {},
-  roomToNode: const <String, List<String>>{}, // TODO: add entries
+  rooms: const [
+    RoomPolygon(id: 'elev_west',      name: 'West Elevator',       type: AreaType.elevator,  pixels: [
+      Offset(67, 669), Offset(75, 712), Offset(98, 707), Offset(92, 664),
+    ]),
+    RoomPolygon(id: 'entrance_north', name: 'North Entrance',                                pixels: [
+      Offset(453, 89), Offset(454, 133), Offset(517, 131), Offset(518, 87),
+    ]),
+    RoomPolygon(id: 'entrance_wn',    name: 'West North Entrance',                           pixels: [
+      Offset(113, 624), Offset(117, 652), Offset(180, 641), Offset(172, 607),
+    ]),
+    RoomPolygon(id: 'entrance_ws',    name: 'West South Entrance',                           pixels: [
+      Offset(138, 768), Offset(150, 808), Offset(209, 794), Offset(199, 756),
+    ]),
+    RoomPolygon(id: 'stair_west',     name: 'West Stairs',         type: AreaType.staircase, pixels: [
+      Offset(75, 711), Offset(94, 821), Offset(146, 810), Offset(126, 700),
+    ]),
+    RoomPolygon(id: '141',  name: 'Room 141',  pixels: [
+      Offset(408, 685), Offset(408, 757), Offset(357, 757), Offset(356, 685),
+    ]),
+    RoomPolygon(id: '131',  name: 'Room 131',  pixels: [
+      Offset(504, 674), Offset(503, 732), Offset(543, 731), Offset(543, 674),
+    ]),
+    RoomPolygon(id: '129',  name: 'Room 129',  pixels: [
+      Offset(583, 674), Offset(583, 722), Offset(544, 731), Offset(544, 674),
+    ]),
+    RoomPolygon(id: '132',  name: 'Room 132',  pixels: [
+      Offset(489, 582), Offset(490, 649), Offset(545, 649), Offset(545, 581),
+    ]),
+    RoomPolygon(id: '151',  name: 'Room 151',  pixels: [
+      Offset(244, 508), Offset(244, 649), Offset(441, 648), Offset(441, 628),
+      Offset(453, 627), Offset(454, 529), Offset(442, 529), Offset(442, 508),
+    ]),
+    RoomPolygon(id: '155',  name: 'Room 155',  pixels: [
+      Offset(245, 369), Offset(244, 508), Offset(442, 508), Offset(442, 486),
+      Offset(449, 485), Offset(450, 387), Offset(441, 386), Offset(440, 365),
+    ]),
+    RoomPolygon(id: '159',  name: 'Room 159',  pixels: [
+      Offset(246, 223), Offset(246, 366), Offset(440, 365), Offset(441, 343),
+      Offset(454, 343), Offset(452, 245), Offset(441, 244), Offset(441, 223),
+    ]),
+    RoomPolygon(id: '161A', name: 'Room 161A', pixels: [
+      Offset(245, 181), Offset(246, 222), Offset(307, 223), Offset(307, 180),
+    ]),
+    RoomPolygon(id: '161B', name: 'Room 161B', pixels: [
+      Offset(246, 141), Offset(246, 181), Offset(306, 181), Offset(306, 139),
+    ]),
+    RoomPolygon(id: '161C', name: 'Room 161C', pixels: [
+      Offset(245, 81), Offset(246, 138), Offset(306, 139), Offset(307, 82),
+    ]),
+    RoomPolygon(id: '161',  name: 'Room 161',  pixels: [
+      Offset(306, 86), Offset(452, 85), Offset(453, 199), Offset(440, 198),
+      Offset(441, 223), Offset(307, 223),
+    ]),
+    RoomPolygon(id: '148',  name: 'Room 148',  pixels: [
+      Offset(501, 538), Offset(502, 581), Offset(546, 581), Offset(545, 649),
+      Offset(674, 648), Offset(674, 538),
+    ]),
+    RoomPolygon(id: '152',  name: 'Room 152',  pixels: [
+      Offset(674, 454), Offset(673, 538), Offset(516, 538), Offset(515, 517),
+      Offset(502, 517), Offset(502, 456),
+    ]),
+    RoomPolygon(id: '108A', name: 'Room 108A', pixels: [
+      Offset(621, 327), Offset(619, 455), Offset(502, 456), Offset(502, 326),
+    ]),
+    RoomPolygon(id: '106',  name: 'Room 106',  pixels: [
+      Offset(488, 250), Offset(489, 327), Offset(545, 326), Offset(544, 249),
+    ]),
+    RoomPolygon(id: '108',  name: 'Room 108',  pixels: [
+      Offset(545, 249), Offset(546, 325), Offset(591, 326), Offset(591, 249),
+    ]),
+    RoomPolygon(id: '110',  name: 'Room 110',  pixels: [
+      Offset(591, 248), Offset(592, 327), Offset(632, 327), Offset(633, 249),
+    ]),
+    RoomPolygon(id: '116',  name: 'Room 116',  pixels: [
+      Offset(622, 328), Offset(620, 417), Offset(672, 417), Offset(673, 326),
+    ]),
+    RoomPolygon(id: '104',  name: 'Room 104',  pixels: [
+      Offset(503, 133), Offset(501, 223), Offset(674, 224), Offset(674, 131),
+    ]),
+    RoomPolygon(id: '104A', name: 'Room 104A', pixels: [
+      Offset(518, 87), Offset(518, 133), Offset(610, 130), Offset(610, 87),
+    ]),
+    RoomPolygon(id: '104B', name: 'Room 104B', pixels: [
+      Offset(611, 81), Offset(611, 131), Offset(670, 131), Offset(669, 80),
+    ]),
+    RoomPolygon(id: '101',  name: 'Room 101',  pixels: [
+      Offset(711, 80), Offset(712, 99), Offset(765, 99), Offset(765, 81),
+    ]),
+    RoomPolygon(id: '101A', name: 'Room 101A', pixels: [
+      Offset(712, 102), Offset(765, 102), Offset(764, 131), Offset(711, 130),
+    ]),
+    RoomPolygon(id: '103',  name: 'Room 103',  pixels: [
+      Offset(708, 134), Offset(766, 135), Offset(766, 177), Offset(708, 177),
+    ]),
+    RoomPolygon(id: '125',  name: 'Room 125',  pixels: [
+      Offset(788, 537), Offset(788, 654), Offset(709, 669), Offset(710, 538),
+    ]),
+  ],
+  navNodes: const {
+    // Stair / elevator cross-floor nodes — neighbors filled in once hallway graph is built
+    'F1_stairW': NavNode(id: 'F1_stairW', position: Offset(110, 760), neighbors: []),
+    'F1_elevW':  NavNode(id: 'F1_elevW',  position: Offset(83,  688), neighbors: []),
+  },
+  roomToNode: const <String, List<String>>{},
 );
 
 // ── Floor 2 ───────────────────────────────────────────────────
