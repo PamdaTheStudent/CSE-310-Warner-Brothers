@@ -4,7 +4,6 @@ import 'models/nav_models.dart';
 import 'data/stc_building.dart';
 import 'theme.dart';
 
-bool __indoor = false;
 
 void main() {
   runApp(const MyApp());
@@ -52,6 +51,12 @@ class _MapScreenState extends State<MapScreen> {
   // Route overlay points (pixel coords, converted to screen at paint time).
   List<Offset> routePoints = [];
 
+  // Route stored as a list of room names.
+  List<String> route = [];
+
+  // Whether to show indoor or map view.
+  bool __indoor = false;
+
   // Current step along the route (index into routePoints).
   int _currentStep = 0;
 
@@ -72,6 +77,12 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  String resolveName() {
+    if(_currentStep >= route.length-1)
+      return "https://diarsaleh.com/images/${route[_currentStep-1]+route[_currentStep]}.png";
+    else
+      return "https://diarsaleh.com/images/${route[_currentStep]+route[_currentStep+1]}.png";
+  }
   // Text input controllers (fallback when no room is tapped).
   final TextEditingController startController = TextEditingController();
   final TextEditingController endController   = TextEditingController();
@@ -103,7 +114,7 @@ class _MapScreenState extends State<MapScreen> {
       });
       // Auto-route as soon as both endpoints are chosen
       if (_selectedStart != null && _selectedEnd != null) {
-        generateRoute();
+        route = generateRoute();
       }
       return;
     }
@@ -139,7 +150,7 @@ class _MapScreenState extends State<MapScreen> {
   List<String> _resolveNodes(String roomId) =>
       _floor.roomToNode[roomId.trim()] ?? [];
 
-  void generateRoute() {
+  List<String> generateRoute() {
     final startNodes = _selectedStart != null
         ? _resolveNodes(_selectedStart!)
         : _resolveNodes(startController.text);
@@ -152,14 +163,14 @@ class _MapScreenState extends State<MapScreen> {
         content: Text('No start room selected'),
         backgroundColor: Colors.redAccent,
       ));
-      return;
+      return ['invalid'];
     }
     if (endNodes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('No destination room selected'),
         backgroundColor: Colors.redAccent,
       ));
-      return;
+      return ['invalid'];
     }
 
     // Try every start-door × end-door combination; keep the shortest path.
@@ -180,6 +191,7 @@ class _MapScreenState extends State<MapScreen> {
           .toList();
       _currentStep = 0;
     });
+    return bestPath;
   }
 
   // ── Coordinate helpers ──────────────────────────────────────
@@ -221,6 +233,7 @@ class _MapScreenState extends State<MapScreen> {
 
             // ── Selection bar: tapped room chips + view toggle ─
             SelectionBar(
+              pathSelected: routePoints.isNotEmpty,
               selectedStart: _selectedStart,
               selectedEnd:   _selectedEnd,
               onPressed:     switchView
@@ -243,8 +256,8 @@ class _MapScreenState extends State<MapScreen> {
                       SizedBox(
                         width:  constraints.maxWidth,
                         height: constraints.maxHeight,
-                        child: Image.asset(
-                          __indoor ? "depression": _floor.imagePath,
+                        child: Image.network(
+                          __indoor ? resolveName() : _floor.imagePath,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) =>
                               const ColoredBox(color: Color(0xFF1E1E1E)),
@@ -252,7 +265,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
 
                       // Building outline + room polygons
-                      CustomPaint(
+                      if(!__indoor) CustomPaint(
                         size: Size(constraints.maxWidth, constraints.maxHeight),
                         painter: RoomPolygonPainter(
                           rooms:           _floor.rooms,
@@ -264,7 +277,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
 
                       // Route line + current-step dot
-                      CustomPaint(
+                      if(!__indoor)CustomPaint(
                         size: Size(constraints.maxWidth, constraints.maxHeight),
                         painter: PathPainter(
                           points:      routePoints.map((p) => _pixelToScreen(p, rect)).toList(),
@@ -426,8 +439,9 @@ class SelectionBar extends StatelessWidget {
   final String? selectedStart;
   final String? selectedEnd;
   final VoidCallback onPressed;
+  final bool pathSelected;
 
-  const SelectionBar({super.key, required this.onPressed, this.selectedStart, this.selectedEnd});
+  const SelectionBar({super.key, required this.onPressed, required this.pathSelected, this.selectedStart, this.selectedEnd});
 
   @override
   Widget build(BuildContext context) {
@@ -457,8 +471,9 @@ class SelectionBar extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           // View toggle placeholder
-          IconButton(
-            icon: const Icon(Icons.view_carousel_outlined),
+          if(pathSelected)
+            IconButton(
+            icon: const Icon(Icons.image_outlined),
             onPressed: onPressed,
             tooltip: 'Change view',
           ),

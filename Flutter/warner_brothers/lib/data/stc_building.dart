@@ -24,7 +24,7 @@ final BuildingData stcBuilding = BuildingData(
 final FloorData _floor1 = FloorData(
   floorNumber: 1,
   name: 'Floor 1',
-  imagePath: 'assets/images/stc_floor_1.png',
+  imagePath: 'https://diarsaleh.com/images/stc_1.png',
   rooms: const [],
   navNodes: const {},
   roomToNode: const <String, List<String>>{}, // TODO: add entries
@@ -34,7 +34,7 @@ final FloorData _floor1 = FloorData(
 final FloorData _floor2 = FloorData(
   floorNumber: 2,
   name: 'Floor 2',
-  imagePath: 'assets/images/stc/floor_map/stc_floor_2.png',
+  imagePath: 'https://diarsaleh.com/images/stc_2.png',
   rooms: const [],
   navNodes: const {},
   roomToNode: const <String, List<String>>{}, // TODO: add entries
@@ -44,7 +44,7 @@ final FloorData _floor2 = FloorData(
 final FloorData _floor3 = FloorData(
   floorNumber: 3,
   name: 'Floor 3',
-  imagePath: 'assets/images/stc/floor_map/stc_3.png',
+  imagePath: 'https://diarsaleh.com/images/stc_3.png',
 
   // ── Room polygons ──────────────────────────────────────────
   rooms: const [
