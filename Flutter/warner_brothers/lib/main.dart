@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         themeMode: mode,
         theme:     AppTheme.light(),
         darkTheme: AppTheme.dark(),
-        home: const MapScreen(),
+        home: MapScreen(building: stcBuilding),
       ),
     );
   }
@@ -33,7 +33,8 @@ class MyApp extends StatelessWidget {
 //  MapScreen
 // ─────────────────────────────────────────────────────────────
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final BuildingData building;
+  const MapScreen({super.key, required this.building});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -41,7 +42,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   // Active building and floor.
-  final _building       = stcBuilding;
+  BuildingData get _building => widget.building;
   int   _currentFloorNum = 3;
   FloorData get _floor  => _building.floor(_currentFloorNum)!;
 
@@ -396,6 +397,248 @@ class _MapScreenState extends State<MapScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────
+//  MainMenuScreen  — building selector
+// ─────────────────────────────────────────────────────────────
+class MainMenuScreen extends StatelessWidget {
+  const MainMenuScreen({super.key});
+
+  // Buildings available to select. Add more entries here later.
+  static const _buildings = [
+    _BuildingEntry(
+      id:          'STC',
+      name:        'STC Building',
+      description: 'Science & Technology Center',
+      icon:        Icons.science_outlined,
+    ),
+    _BuildingEntry(
+      id:          'LIB',
+      name:        'Library',
+      description: 'Campus Library',
+      icon:        Icons.local_library_outlined,
+    ),
+    _BuildingEntry(
+      id:          'GYM',
+      name:        'Recreation Center',
+      description: 'Gym & Athletics',
+      icon:        Icons.sports_basketball_outlined,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              decoration: BoxDecoration(
+                color: Palette.surface(context),
+                border: Border(bottom: BorderSide(color: Palette.border(context))),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Campus Navigator',
+                          style: TextStyle(
+                            fontSize:   26,
+                            fontWeight: FontWeight.bold,
+                            color:      Palette.textPrimary(context),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Select a building to get started',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color:    Palette.textSecondary(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Theme toggle
+                  IconButton(
+                    icon: Icon(
+                      isDark ? Icons.light_mode : Icons.dark_mode,
+                      color: Palette.textSecondary(context),
+                    ),
+                    onPressed: () {
+                      themeNotifier.value =
+                          isDark ? ThemeMode.light : ThemeMode.dark;
+                    },
+                    tooltip: 'Toggle theme',
+                  ),
+                ],
+              ),
+            ),
+
+            // Building cards
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: _buildings.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) {
+                  final entry = _buildings[i];
+                  final data  = _resolveBuildingData(entry.id);
+                  return _BuildingCard(
+                    entry:   entry,
+                    enabled: data != null,
+                    onTap: data != null
+                        ? () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MapScreen(building: data),
+                              ),
+                            )
+                        : null,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Maps a building ID to its BuildingData object.
+  /// Add cases here as new buildings are added to the data layer.
+  BuildingData? _resolveBuildingData(String id) {
+    switch (id) {
+      case 'STC': return stcBuilding;
+      default:    return null;
+    }
+  }
+}
+
+// ── _BuildingEntry ────────────────────────────────────────────
+// Lightweight descriptor used only by the menu — no FloorData loaded yet.
+class _BuildingEntry {
+  final String   id;
+  final String   name;
+  final String   description;
+  final IconData icon;
+
+  const _BuildingEntry({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.icon,
+  });
+}
+
+// ── _BuildingCard ─────────────────────────────────────────────
+class _BuildingCard extends StatelessWidget {
+  final _BuildingEntry  entry;
+  final VoidCallback?   onTap;
+  final bool            enabled;
+
+  const _BuildingCard({
+    required this.entry,
+    required this.enabled,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = enabled
+        ? Palette.accent(context)
+        : Palette.textDisabled(context);
+    final iconBg = enabled
+        ? Palette.accent(context).withAlpha(30)
+        : Palette.textDisabled(context).withAlpha(20);
+
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.5,
+      child: Card(
+        elevation: enabled ? 2 : 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: Palette.surface(context),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color:        iconBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(entry.icon, color: iconColor, size: 28),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            entry.name,
+                            style: TextStyle(
+                              fontSize:   17,
+                              fontWeight: FontWeight.bold,
+                              color:      enabled
+                                  ? Palette.textPrimary(context)
+                                  : Palette.textDisabled(context),
+                            ),
+                          ),
+                          if (!enabled) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color:        Palette.textDisabled(context).withAlpha(30),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Coming Soon',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color:    Palette.textDisabled(context),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        entry.description,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color:    Palette.textSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  enabled ? Icons.chevron_right : Icons.lock_outline,
+                  color: Palette.textHint(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 //  _TopBar
 // ─────────────────────────────────────────────────────────────
 class _TopBar extends StatelessWidget {
@@ -601,16 +844,6 @@ class _BottomBar extends StatelessWidget {
                       ))
                   .toList(),
               onChanged: (v) { if (v != null) onFloorChanged(v); },
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Building selection
-          Expanded(
-            child: FilledButton(
-              onPressed: () {
-                // TODO: open building picker
-              },
-              child: const Text('Building Selection'),
             ),
           ),
         ],

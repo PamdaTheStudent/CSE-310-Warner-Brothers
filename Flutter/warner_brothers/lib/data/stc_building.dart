@@ -21,29 +21,29 @@ final BuildingData stcBuilding = BuildingData(
   // Each staircase/elevator needs one entry per direction.
   // Add matching nodes to the other floors when they are mapped.
   crossFloorLinks: const [
-    // West staircase (floor 3 ↔ floor 2) — both directions
-    CrossFloorLink(fromFloor: 3, fromNodeId: 'N_stairW',  toFloor: 2, toNodeId: 'F2_stairW'),
-    CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_stairW', toFloor: 3, toNodeId: 'N_stairW'),
+    // East staircase (floor 3 N71 ↔ floor 2 N73)
+    CrossFloorLink(fromFloor: 3, fromNodeId: 'N71', toFloor: 2, toNodeId: 'N73'),
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N73', toFloor: 3, toNodeId: 'N71'),
 
-    // East staircase (floor 3 ↔ floor 2) — both directions
-    CrossFloorLink(fromFloor: 3, fromNodeId: 'N_stairE',  toFloor: 2, toNodeId: 'F2_stairE'),
-    CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_stairE', toFloor: 3, toNodeId: 'N_stairE'),
+    // West/south staircase (floor 3 N77 ↔ floor 2 N76)
+    CrossFloorLink(fromFloor: 3, fromNodeId: 'N77', toFloor: 2, toNodeId: 'N76'),
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N76', toFloor: 3, toNodeId: 'N77'),
 
-    // West elevator (floor 3 ↔ floor 2)
-    CrossFloorLink(fromFloor: 3, fromNodeId: 'N_elevW',  toFloor: 2, toNodeId: 'F2_elevW'),
-    CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_elevW', toFloor: 3, toNodeId: 'N_elevW'),
+    // East elevator (floor 3 N81 ↔ floor 2 N79)
+    CrossFloorLink(fromFloor: 3, fromNodeId: 'N81', toFloor: 2, toNodeId: 'N79'),
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N79', toFloor: 3, toNodeId: 'N81'),
 
-    // East elevator (floor 3 ↔ floor 2)
-    CrossFloorLink(fromFloor: 3, fromNodeId: 'N_elevE',  toFloor: 2, toNodeId: 'F2_elevE'),
-    CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_elevE', toFloor: 3, toNodeId: 'N_elevE'),
+    // West/south elevator (floor 3 N83 ↔ floor 2 N82)
+    CrossFloorLink(fromFloor: 3, fromNodeId: 'N83', toFloor: 2, toNodeId: 'N82'),
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N82', toFloor: 3, toNodeId: 'N83'),
 
-    // West staircase (floor 2 ↔ floor 1) — both directions
-    CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_stairW', toFloor: 1, toNodeId: 'F1_stairW'),
-    CrossFloorLink(fromFloor: 1, fromNodeId: 'F1_stairW', toFloor: 2, toNodeId: 'F2_stairW'),
+    // West staircase (floor 2 N76 ↔ floor 1 F1_stairW)
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N76',       toFloor: 1, toNodeId: 'F1_stairW'),
+    CrossFloorLink(fromFloor: 1, fromNodeId: 'F1_stairW', toFloor: 2, toNodeId: 'N76'),
 
-    // West elevator (floor 2 ↔ floor 1)
-    CrossFloorLink(fromFloor: 2, fromNodeId: 'F2_elevW',  toFloor: 1, toNodeId: 'F1_elevW'),
-    CrossFloorLink(fromFloor: 1, fromNodeId: 'F1_elevW',  toFloor: 2, toNodeId: 'F2_elevW'),
+    // West elevator (floor 2 N82 ↔ floor 1 F1_elevW)
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N82',      toFloor: 1, toNodeId: 'F1_elevW'),
+    CrossFloorLink(fromFloor: 1, fromNodeId: 'F1_elevW', toFloor: 2, toNodeId: 'N82'),
   ],
 );
 
@@ -363,100 +363,127 @@ final FloorData _floor2 = FloorData(
 
   // ── Nav nodes ──────────────────────────────────────────────
   navNodes: const {
-    // ── Top hallway spine (y ≈ 270) ──────────────────────────
-    'F2_N1':  NavNode(id: 'F2_N1',  position: Offset(250, 270), neighbors: ['F2_N2', 'F2_N10']),
-    'F2_N2':  NavNode(id: 'F2_N2',  position: Offset(380, 270), neighbors: ['F2_N1', 'F2_N3']),
-    'F2_N3':  NavNode(id: 'F2_N3',  position: Offset(500, 270), neighbors: ['F2_N2', 'F2_N4']),
-    'F2_N4':  NavNode(id: 'F2_N4',  position: Offset(595, 270), neighbors: ['F2_N3', 'F2_N5']),
-    'F2_N5':  NavNode(id: 'F2_N5',  position: Offset(695, 270), neighbors: ['F2_N4', 'F2_N6']),
-    'F2_N6':  NavNode(id: 'F2_N6',  position: Offset(860, 270), neighbors: ['F2_N5', 'F2_N7']),
-    'F2_N7':  NavNode(id: 'F2_N7',  position: Offset(1000, 270), neighbors: ['F2_N6', 'F2_N8']),
-    'F2_N8':  NavNode(id: 'F2_N8',  position: Offset(1085, 270), neighbors: ['F2_N7', 'F2_N9', 'F2_N13']),
-    'F2_N9':  NavNode(id: 'F2_N9',  position: Offset(1190, 270), neighbors: ['F2_N8', 'F2_N12', 'F2_elevE']),
-
-    // ── Left-side vertical (connecting rooms 247/251/253) ────
-    'F2_N10': NavNode(id: 'F2_N10', position: Offset(250, 360), neighbors: ['F2_N1', 'F2_N11']),
-    'F2_N11': NavNode(id: 'F2_N11', position: Offset(250, 440), neighbors: ['F2_N10']),
-
-    // ── East-side vertical ────────────────────────────────────
-    'F2_N12': NavNode(id: 'F2_N12', position: Offset(1190, 370), neighbors: ['F2_N9', 'F2_N13', 'F2_stairE']),
-    'F2_N13': NavNode(id: 'F2_N13', position: Offset(1085, 440), neighbors: ['F2_N8', 'F2_N12', 'F2_N14']),
-
-    // ── Lobby staircase (center-east, connects south) ─────────
-    'F2_N14': NavNode(id: 'F2_N14', position: Offset(979, 465), neighbors: ['F2_N13', 'F2_N7', 'F2_N15', 'F2_stairLobby']),
-
-    // ── South corridor spine ──────────────────────────────────
-    'F2_N15': NavNode(id: 'F2_N15', position: Offset(979, 555), neighbors: ['F2_N14', 'F2_N16']),
-    'F2_N16': NavNode(id: 'F2_N16', position: Offset(940, 640), neighbors: ['F2_N15', 'F2_N17']),
-    'F2_N17': NavNode(id: 'F2_N17', position: Offset(840, 620), neighbors: ['F2_N16', 'F2_N18']),
-    'F2_N18': NavNode(id: 'F2_N18', position: Offset(730, 590), neighbors: ['F2_N17', 'F2_N19']),
-    'F2_N19': NavNode(id: 'F2_N19', position: Offset(645, 620), neighbors: ['F2_N18', 'F2_N20']),
-    'F2_N20': NavNode(id: 'F2_N20', position: Offset(530, 630), neighbors: ['F2_N19', 'F2_N21']),
-    'F2_N21': NavNode(id: 'F2_N21', position: Offset(370, 660), neighbors: ['F2_N20', 'F2_N22']),
-    'F2_N22': NavNode(id: 'F2_N22', position: Offset(210, 700), neighbors: ['F2_N21', 'F2_stairW', 'F2_elevW']),
-
-    // ── Staircase / elevator nodes (cross-floor anchors) ─────
-    'F2_stairW':    NavNode(id: 'F2_stairW',    position: Offset(107, 793), neighbors: ['F2_N22']),
-    'F2_elevW':     NavNode(id: 'F2_elevW',     position: Offset(80,  725), neighbors: ['F2_N22']),
-    'F2_stairE':    NavNode(id: 'F2_stairE',    position: Offset(1255, 387), neighbors: ['F2_N12']),
-    'F2_elevE':     NavNode(id: 'F2_elevE',     position: Offset(1262, 310), neighbors: ['F2_N9']),
-    'F2_stairLobby':NavNode(id: 'F2_stairLobby',position: Offset(979, 465), neighbors: ['F2_N14']),
+    'N73':  NavNode(id: 'N73',  position: Offset(1253, 396), neighbors: ['N92']),
+    'N74':  NavNode(id: 'N74',  position: Offset(1045, 466), neighbors: ['N138', 'N146', 'N91']),
+    'N75':  NavNode(id: 'N75',  position: Offset(975,  464), neighbors: []),
+    'N76':  NavNode(id: 'N76',  position: Offset(106,  800), neighbors: ['N84']),
+    'N79':  NavNode(id: 'N79',  position: Offset(1255, 310), neighbors: ['N93']),
+    'N80':  NavNode(id: 'N80',  position: Offset(1374, 421), neighbors: []),
+    'N82':  NavNode(id: 'N82',  position: Offset(78,   727), neighbors: ['N85']),
+    'N84':  NavNode(id: 'N84',  position: Offset(147,  792), neighbors: ['N76', 'N85']),
+    'N85':  NavNode(id: 'N85',  position: Offset(128,  720), neighbors: ['N84', 'N86', 'N82']),
+    'N86':  NavNode(id: 'N86',  position: Offset(122,  688), neighbors: ['N85', 'N87']),
+    'N87':  NavNode(id: 'N87',  position: Offset(153,  685), neighbors: ['N86', 'N90']),
+    'N88':  NavNode(id: 'N88',  position: Offset(350,  649), neighbors: ['N90', 'N133']),
+    'N89':  NavNode(id: 'N89',  position: Offset(376,  646), neighbors: ['N90', 'N133']),
+    'N90':  NavNode(id: 'N90',  position: Offset(294,  656), neighbors: ['N87', 'N88', 'N89', 'N117', 'N133']),
+    'N91':  NavNode(id: 'N91',  position: Offset(1206, 462), neighbors: ['N74', 'N138', 'N147', 'N92']),
+    'N92':  NavNode(id: 'N92',  position: Offset(1207, 394), neighbors: ['N91', 'N73', 'N93']),
+    'N93':  NavNode(id: 'N93',  position: Offset(1211, 312), neighbors: ['N92', 'N79', 'N94']),
+    'N94':  NavNode(id: 'N94',  position: Offset(1208, 270), neighbors: ['N93', 'N95']),
+    'N95':  NavNode(id: 'N95',  position: Offset(1176, 273), neighbors: ['N94', 'N96', 'N97', 'N98']),
+    'N96':  NavNode(id: 'N96',  position: Offset(1175, 245), neighbors: ['N95']),
+    'N97':  NavNode(id: 'N97',  position: Offset(1180, 300), neighbors: ['N95']),
+    'N98':  NavNode(id: 'N98',  position: Offset(1069, 276), neighbors: ['N95', 'N99']),
+    'N99':  NavNode(id: 'N99',  position: Offset(986,  276), neighbors: ['N98', 'N100']),
+    'N100': NavNode(id: 'N100', position: Offset(939,  276), neighbors: ['N99', 'N101']),
+    'N101': NavNode(id: 'N101', position: Offset(920,  276), neighbors: ['N100', 'N102']),
+    'N102': NavNode(id: 'N102', position: Offset(900,  276), neighbors: ['N101', 'N103', 'N149']),
+    'N103': NavNode(id: 'N103', position: Offset(837,  274), neighbors: ['N102', 'N104']),
+    'N104': NavNode(id: 'N104', position: Offset(715,  275), neighbors: ['N103', 'N105', 'N148']),
+    'N105': NavNode(id: 'N105', position: Offset(684,  273), neighbors: ['N104', 'N106']),
+    'N106': NavNode(id: 'N106', position: Offset(654,  275), neighbors: ['N105', 'N121']),
+    'N107': NavNode(id: 'N107', position: Offset(591,  275), neighbors: ['N121', 'N108']),
+    'N108': NavNode(id: 'N108', position: Offset(563,  276), neighbors: ['N107', 'N120']),
+    'N109': NavNode(id: 'N109', position: Offset(442,  273), neighbors: ['N120', 'N119']),
+    'N110': NavNode(id: 'N110', position: Offset(391,  274), neighbors: ['N119', 'N111']),
+    'N111': NavNode(id: 'N111', position: Offset(356,  275), neighbors: ['N110', 'N118']),
+    'N112': NavNode(id: 'N112', position: Offset(331,  276), neighbors: ['N118', 'N114']),
+    'N113': NavNode(id: 'N113', position: Offset(227,  273), neighbors: ['N114']),
+    'N114': NavNode(id: 'N114', position: Offset(286,  275), neighbors: ['N112', 'N113', 'N115']),
+    'N115': NavNode(id: 'N115', position: Offset(286,  310), neighbors: ['N114', 'N116']),
+    'N116': NavNode(id: 'N116', position: Offset(286,  339), neighbors: ['N117', 'N115']),
+    'N117': NavNode(id: 'N117', position: Offset(287,  431), neighbors: ['N90', 'N116', 'N133']),
+    'N118': NavNode(id: 'N118', position: Offset(343,  277), neighbors: ['N111', 'N112']),
+    'N119': NavNode(id: 'N119', position: Offset(415,  278), neighbors: ['N109', 'N110']),
+    'N120': NavNode(id: 'N120', position: Offset(524,  278), neighbors: ['N108', 'N109']),
+    'N121': NavNode(id: 'N121', position: Offset(628,  279), neighbors: ['N106', 'N107']),
+    'N122': NavNode(id: 'N122', position: Offset(487,  627), neighbors: ['N125']),
+    'N123': NavNode(id: 'N123', position: Offset(668,  592), neighbors: ['N126']),
+    'N124': NavNode(id: 'N124', position: Offset(701,  586), neighbors: ['N127']),
+    'N125': NavNode(id: 'N125', position: Offset(473,  572), neighbors: ['N128', 'N122', 'N134', 'N129']),
+    'N126': NavNode(id: 'N126', position: Offset(657,  540), neighbors: ['N131', 'N123', 'N127', 'N136', 'N135']),
+    'N127': NavNode(id: 'N127', position: Offset(689,  532), neighbors: ['N124', 'N126', 'N132', 'N136', 'N135', 'N148']),
+    'N128': NavNode(id: 'N128', position: Offset(424,  582), neighbors: ['N133', 'N134', 'N125']),
+    'N129': NavNode(id: 'N129', position: Offset(526,  563), neighbors: ['N125', 'N130', 'N135', 'N134']),
+    'N130': NavNode(id: 'N130', position: Offset(574,  558), neighbors: ['N129', 'N131', 'N135', 'N134']),
+    'N131': NavNode(id: 'N131', position: Offset(620,  546), neighbors: ['N130', 'N126', 'N135', 'N134']),
+    'N132': NavNode(id: 'N132', position: Offset(724,  530), neighbors: ['N127', 'N136', 'N135', 'N144']),
+    'N133': NavNode(id: 'N133', position: Offset(345,  527), neighbors: ['N88', 'N89', 'N90', 'N134', 'N128', 'N117']),
+    'N134': NavNode(id: 'N134', position: Offset(482,  512), neighbors: ['N133', 'N128', 'N125', 'N135', 'N129', 'N130', 'N131']),
+    'N135': NavNode(id: 'N135', position: Offset(629,  496), neighbors: ['N134', 'N136', 'N132', 'N127', 'N126', 'N131', 'N130', 'N129', 'N148']),
+    'N136': NavNode(id: 'N136', position: Offset(734,  486), neighbors: ['N135', 'N132', 'N127', 'N126', 'N144', 'N148', 'N149', 'N150']),
+    'N137': NavNode(id: 'N137', position: Offset(966,  503), neighbors: ['N141', 'N144', 'N145', 'N146', 'N150']),
+    'N138': NavNode(id: 'N138', position: Offset(1125, 517), neighbors: ['N142', 'N145', 'N74', 'N146', 'N91', 'N147']),
+    'N139': NavNode(id: 'N139', position: Offset(1217, 509), neighbors: ['N147']),
+    'N140': NavNode(id: 'N140', position: Offset(965,  716), neighbors: ['N141']),
+    'N141': NavNode(id: 'N141', position: Offset(988,  627), neighbors: ['N140', 'N144', 'N145', 'N137']),
+    'N142': NavNode(id: 'N142', position: Offset(1142, 637), neighbors: ['N145', 'N143', 'N138', 'N147']),
+    'N143': NavNode(id: 'N143', position: Offset(1276, 673), neighbors: ['N142']),
+    'N144': NavNode(id: 'N144', position: Offset(882,  533), neighbors: ['N136', 'N132', 'N145', 'N141', 'N137', 'N150']),
+    'N145': NavNode(id: 'N145', position: Offset(1041, 581), neighbors: ['N144', 'N141', 'N137', 'N142', 'N138', 'N146']),
+    'N146': NavNode(id: 'N146', position: Offset(1045, 514), neighbors: ['N137', 'N138', 'N74', 'N145']),
+    'N147': NavNode(id: 'N147', position: Offset(1169, 509), neighbors: ['N138', 'N139', 'N91', 'N142']),
+    'N148': NavNode(id: 'N148', position: Offset(707,  456), neighbors: ['N135', 'N136', 'N127', 'N104']),
+    'N149': NavNode(id: 'N149', position: Offset(892,  455), neighbors: ['N136', 'N150', 'N102']),
+    'N150': NavNode(id: 'N150', position: Offset(885,  495), neighbors: ['N144', 'N137', 'N136', 'N149']),
   },
 
   // ── Room → nav node mapping ───────────────────────────────
   roomToNode: const {
     // Staircases / elevators
-    'stair_west':    ['F2_stairW'],
-    'elevator_west': ['F2_elevW'],
-    'stair_east':    ['F2_stairE'],
-    'elevator_east': ['F2_elevE'],
-    'stair_lobby':   ['F2_stairLobby'],
-    'entrance_south':['F2_N16'],
-    'entrance_east': ['F2_N12'],
+    'stair_east':    ['N73'],
+    'stair_lobby':   ['N75'],
+    'stair_west':    ['N76'],
+    'elevator_east': ['N79'],
+    'elevator_west': ['N82'],
+    'entrance_east': ['N139'],
+    'entrance_south':['N140'],
 
     // North rooms
-    '295':   ['F2_N8', 'F2_N9'],
-    '291':   ['F2_N7', 'F2_N8'],
-    '285':   ['F2_N6', 'F2_N7'],
-    '275':   ['F2_N5', 'F2_N6'],
-    '267':   ['F2_N4', 'F2_N5'],
-    '267B':  ['F2_N5'],
-    '261':   ['F2_N3', 'F2_N4'],
-    '259':   ['F2_N2'],
-    '257':   ['F2_N2', 'F2_N3'],
-    '255':   ['F2_N1', 'F2_N2'],
-    '253':   ['F2_N10'],
-    '251':   ['F2_N10', 'F2_N11'],
-    '247':   ['F2_N10', 'F2_N11'],
-    '2-R':   ['F2_N9', 'F2_N12'],
-
-    // East rooms
-    '294':   ['F2_N8', 'F2_N13'],
-    '290':   ['F2_N7', 'F2_N8'],
-    '286':   ['F2_N7', 'F2_N13'],
-
-    // Middle rooms
-    '252':   ['F2_N2'],
-    '262':   ['F2_N3'],
-    '264':   ['F2_N4'],
-    '264A':  ['F2_N4'],
-    '268':   ['F2_N4'],
-    '268A':  ['F2_N4'],
+    '295':  ['N96'],
+    '294':  ['N97'],
+    '291':  ['N98', 'N100'],
+    '290':  ['N99'],
+    '285':  ['N102'],
+    '275':  ['N103', 'N104'],
+    '267':  ['N106'],
+    '261':  ['N108', 'N109'],
+    '259':  ['N110'],
+    '257':  ['N111'],
+    '255':  ['N112', 'N113'],
+    '253':  ['N115'],
+    '251':  ['N116'],
+    '247':  ['N117'],
+    '252':  ['N118'],
+    '262':  ['N119'],
+    '264':  ['N120'],
+    '268':  ['N121'],
 
     // South rooms
-    '201':   ['F2_N16'],
-    '205':   ['F2_N15', 'F2_N16'],
-    '207':   ['F2_N17'],
-    '215':   ['F2_N17', 'F2_N18'],
-    '217':   ['F2_N18'],
-    '221':   ['F2_N19'],
-    '223':   ['F2_N19'],
-    '225':   ['F2_N19', 'F2_N20'],
-    '227':   ['F2_N20'],
-    '231':   ['F2_N20'],
-    '235':   ['F2_N21'],
-    '239':   ['F2_N21'],
-    '243':   ['F2_N22'],
+    '243':  ['N87', 'N88'],
+    '239':  ['N89'],
+    '235':  ['N128'],
+    '231':  ['N122'],
+    '227':  ['N129'],
+    '225':  ['N130'],
+    '223':  ['N131'],
+    '221':  ['N123'],
+    '217':  ['N132'],
+    '215':  ['N124'],
+    '207':  ['N144'],
+    '205':  ['N141'],
+    '201':  ['N142', 'N143'],
   },
 );
 
@@ -841,12 +868,12 @@ final FloorData _floor3 = FloorData(
     'N22': NavNode(
       id: 'N22',
       position: Offset(995, 205),
-      neighbors: ['N20', 'N23', 'N_stairE', 'N_elevE'],
+      neighbors: ['N20', 'N72', 'N81'],
     ),
     'N23': NavNode(
       id: 'N23',
       position: Offset(992, 294),
-      neighbors: ['N22', 'N24', 'N_stairE'],
+      neighbors: ['N24', 'N72'],
     ),
     'N24': NavNode(
       id: 'N24',
@@ -1021,34 +1048,20 @@ final FloorData _floor3 = FloorData(
     'N58': NavNode(
       id: 'N58',
       position: Offset(995, 138),
-      neighbors: ['N19', 'N20', 'N_elevE'],
+      neighbors: ['N19', 'N20'],
     ),
     // ── Staircase / elevator nodes (cross-floor anchors) ─────
-    'N_stairW': NavNode(
-      id: 'N_stairW',
-      position: Offset(76, 602),
-      neighbors: ['N61'],
-    ),
-    'N_elevW': NavNode(
-      id: 'N_elevW',
-      position: Offset(54, 543),
-      neighbors: ['N61'],
-    ),
     'N_stairLobby': NavNode(
       id: 'N_stairLobby',
       position: Offset(803, 323),
       neighbors: ['N26', 'N27'],
     ),
-    'N_stairE': NavNode(
-      id: 'N_stairE',
-      position: Offset(1031, 250),
-      neighbors: ['N22', 'N23'],
-    ),
-    'N_elevE': NavNode(
-      id: 'N_elevE',
-      position: Offset(1031, 197),
-      neighbors: ['N22', 'N58'],
-    ),
+    'N71': NavNode(id: 'N71', position: Offset(1030, 247), neighbors: ['N72']),
+    'N72': NavNode(id: 'N72', position: Offset(995,  247), neighbors: ['N22', 'N23', 'N71']),
+    'N77': NavNode(id: 'N77', position: Offset(70,   577), neighbors: ['N78']),
+    'N78': NavNode(id: 'N78', position: Offset(101,  565), neighbors: ['N62', 'N63', 'N77']),
+    'N81': NavNode(id: 'N81', position: Offset(1034, 198), neighbors: ['N22']),
+    'N83': NavNode(id: 'N83', position: Offset(51,   543), neighbors: ['N61']),
 
     'N59': NavNode(
       id: 'N59',
@@ -1063,17 +1076,17 @@ final FloorData _floor3 = FloorData(
     'N61': NavNode(
       id: 'N61',
       position: Offset(75, 540),
-      neighbors: ['N62', 'N_stairW', 'N_elevW'],
+      neighbors: ['N62', 'N83'],
     ),
     'N62': NavNode(
       id: 'N62',
       position: Offset(106, 536),
-      neighbors: ['N60', 'N63', 'N61'],
+      neighbors: ['N60', 'N63', 'N61', 'N78'],
     ),
     'N63': NavNode(
       id: 'N63',
       position: Offset(118, 587),
-      neighbors: ['N64', 'N62'],
+      neighbors: ['N64', 'N62', 'N78'],
     ),
     'N64': NavNode(
       id: 'N64',
@@ -1098,11 +1111,11 @@ final FloorData _floor3 = FloorData(
   // gives the shorter path automatically.
   roomToNode: const {
     // Staircases & elevators
-    'stair_west':    ['N_stairW'],
-    'elevator_west': ['N_elevW'],
+    'stair_east':    ['N71'],
+    'elevator_east': ['N81'],
+    'stair_west':    ['N77'],
+    'elevator_west': ['N83'],
     'stair_lobby':   ['N_stairLobby'],
-    'stair_east':    ['N_stairE'],
-    'elevator_east': ['N_elevE'],
 
     // North row
     '347':        ['N1', 'N2'],   // top door + hallway door
