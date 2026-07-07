@@ -17,6 +17,34 @@ final BuildingData stcBuilding = BuildingData(
   id: 'STC',
   name: 'STC Building',
   floors: [_floor1, _floor2, _floor3],
+  // ── Cross-floor links ───────────────────────────────────────
+  // Each staircase/elevator needs one entry per direction.
+  // Add matching nodes to the other floors when they are mapped.
+  crossFloorLinks: const [
+    // East staircase (floor 3 N71 ↔ floor 2 N73)
+    CrossFloorLink(fromFloor: 3, fromNodeId: 'N71', toFloor: 2, toNodeId: 'N73'),
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N73', toFloor: 3, toNodeId: 'N71'),
+
+    // West/south staircase (floor 3 N77 ↔ floor 2 N76)
+    CrossFloorLink(fromFloor: 3, fromNodeId: 'N77', toFloor: 2, toNodeId: 'N76'),
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N76', toFloor: 3, toNodeId: 'N77'),
+
+    // East elevator (floor 3 N81 ↔ floor 2 N79)
+    CrossFloorLink(fromFloor: 3, fromNodeId: 'N81', toFloor: 2, toNodeId: 'N79'),
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N79', toFloor: 3, toNodeId: 'N81'),
+
+    // West/south elevator (floor 3 N83 ↔ floor 2 N82)
+    CrossFloorLink(fromFloor: 3, fromNodeId: 'N83', toFloor: 2, toNodeId: 'N82'),
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N82', toFloor: 3, toNodeId: 'N83'),
+
+    // West staircase (floor 2 N76 ↔ floor 1 N162)
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N76',  toFloor: 1, toNodeId: 'N162'),
+    CrossFloorLink(fromFloor: 1, fromNodeId: 'N162', toFloor: 2, toNodeId: 'N76'),
+
+    // West elevator (floor 2 N82 ↔ floor 1 N161)
+    CrossFloorLink(fromFloor: 2, fromNodeId: 'N82',  toFloor: 1, toNodeId: 'N161'),
+    CrossFloorLink(fromFloor: 1, fromNodeId: 'N161', toFloor: 2, toNodeId: 'N82'),
+  ],
 );
 
 // ── Floor 1 ───────────────────────────────────────────────────
@@ -25,19 +53,504 @@ final FloorData _floor1 = FloorData(
   floorNumber: 1,
   name: 'Floor 1',
   imagePath: 'https://diarsaleh.com/images/stc_1.png',
-  rooms: const [],
-  navNodes: const {},
-  roomToNode: const <String, List<String>>{}, // TODO: add entries
+  nativeWidth:  1479.0,
+  nativeHeight: 883.0,
+  rooms: const [
+    RoomPolygon(id: 'elev_west',      name: 'West Elevator',       type: AreaType.elevator,  pixels: [
+      Offset(67, 669), Offset(75, 712), Offset(98, 707), Offset(92, 664),
+    ]),
+    RoomPolygon(id: 'entrance_north', name: 'North Entrance',                                pixels: [
+      Offset(453, 89), Offset(454, 133), Offset(517, 131), Offset(518, 87),
+    ]),
+    RoomPolygon(id: 'entrance_wn',    name: 'West North Entrance',                           pixels: [
+      Offset(113, 624), Offset(117, 652), Offset(180, 641), Offset(172, 607),
+    ]),
+    RoomPolygon(id: 'entrance_ws',    name: 'West South Entrance',                           pixels: [
+      Offset(138, 768), Offset(150, 808), Offset(209, 794), Offset(199, 756),
+    ]),
+    RoomPolygon(id: 'stair_west',     name: 'West Stairs',         type: AreaType.staircase, pixels: [
+      Offset(75, 711), Offset(94, 821), Offset(146, 810), Offset(126, 700),
+    ]),
+    RoomPolygon(id: '141',  name: 'Room 141',  pixels: [
+      Offset(408, 685), Offset(408, 757), Offset(357, 757), Offset(356, 685),
+    ]),
+    RoomPolygon(id: '131',  name: 'Room 131',  pixels: [
+      Offset(504, 674), Offset(503, 732), Offset(543, 731), Offset(543, 674),
+    ]),
+    RoomPolygon(id: '129',  name: 'Room 129',  pixels: [
+      Offset(583, 674), Offset(583, 722), Offset(544, 731), Offset(544, 674),
+    ]),
+    RoomPolygon(id: '132',  name: 'Room 132',  pixels: [
+      Offset(489, 582), Offset(490, 649), Offset(545, 649), Offset(545, 581),
+    ]),
+    RoomPolygon(id: '151',  name: 'Room 151',  pixels: [
+      Offset(244, 508), Offset(244, 649), Offset(441, 648), Offset(441, 628),
+      Offset(453, 627), Offset(454, 529), Offset(442, 529), Offset(442, 508),
+    ]),
+    RoomPolygon(id: '155',  name: 'Room 155',  pixels: [
+      Offset(245, 369), Offset(244, 508), Offset(442, 508), Offset(442, 486),
+      Offset(449, 485), Offset(450, 387), Offset(441, 386), Offset(440, 365),
+    ]),
+    RoomPolygon(id: '159',  name: 'Room 159',  pixels: [
+      Offset(246, 223), Offset(246, 366), Offset(440, 365), Offset(441, 343),
+      Offset(454, 343), Offset(452, 245), Offset(441, 244), Offset(441, 223),
+    ]),
+    RoomPolygon(id: '161A', name: 'Room 161A', pixels: [
+      Offset(245, 181), Offset(246, 222), Offset(307, 223), Offset(307, 180),
+    ]),
+    RoomPolygon(id: '161B', name: 'Room 161B', pixels: [
+      Offset(246, 141), Offset(246, 181), Offset(306, 181), Offset(306, 139),
+    ]),
+    RoomPolygon(id: '161C', name: 'Room 161C', pixels: [
+      Offset(245, 81), Offset(246, 138), Offset(306, 139), Offset(307, 82),
+    ]),
+    RoomPolygon(id: '161',  name: 'Room 161',  pixels: [
+      Offset(306, 86), Offset(452, 85), Offset(453, 199), Offset(440, 198),
+      Offset(441, 223), Offset(307, 223),
+    ]),
+    RoomPolygon(id: '148',  name: 'Room 148',  pixels: [
+      Offset(501, 538), Offset(502, 581), Offset(546, 581), Offset(545, 649),
+      Offset(674, 648), Offset(674, 538),
+    ]),
+    RoomPolygon(id: '152',  name: 'Room 152',  pixels: [
+      Offset(674, 454), Offset(673, 538), Offset(516, 538), Offset(515, 517),
+      Offset(502, 517), Offset(502, 456),
+    ]),
+    RoomPolygon(id: '108A', name: 'Room 108A', pixels: [
+      Offset(621, 327), Offset(619, 455), Offset(502, 456), Offset(502, 326),
+    ]),
+    RoomPolygon(id: '106',  name: 'Room 106',  pixels: [
+      Offset(488, 250), Offset(489, 327), Offset(545, 326), Offset(544, 249),
+    ]),
+    RoomPolygon(id: '108',  name: 'Room 108',  pixels: [
+      Offset(545, 249), Offset(546, 325), Offset(591, 326), Offset(591, 249),
+    ]),
+    RoomPolygon(id: '110',  name: 'Room 110',  pixels: [
+      Offset(591, 248), Offset(592, 327), Offset(632, 327), Offset(633, 249),
+    ]),
+    RoomPolygon(id: '116',  name: 'Room 116',  pixels: [
+      Offset(622, 328), Offset(620, 417), Offset(672, 417), Offset(673, 326),
+    ]),
+    RoomPolygon(id: '104',  name: 'Room 104',  pixels: [
+      Offset(503, 133), Offset(501, 223), Offset(674, 224), Offset(674, 131),
+    ]),
+    RoomPolygon(id: '104A', name: 'Room 104A', pixels: [
+      Offset(518, 87), Offset(518, 133), Offset(610, 130), Offset(610, 87),
+    ]),
+    RoomPolygon(id: '104B', name: 'Room 104B', pixels: [
+      Offset(611, 81), Offset(611, 131), Offset(670, 131), Offset(669, 80),
+    ]),
+    RoomPolygon(id: '101',  name: 'Room 101',  pixels: [
+      Offset(711, 80), Offset(712, 99), Offset(765, 99), Offset(765, 81),
+    ]),
+    RoomPolygon(id: '101A', name: 'Room 101A', pixels: [
+      Offset(712, 102), Offset(765, 102), Offset(764, 131), Offset(711, 130),
+    ]),
+    RoomPolygon(id: '103',  name: 'Room 103',  pixels: [
+      Offset(708, 134), Offset(766, 135), Offset(766, 177), Offset(708, 177),
+    ]),
+    RoomPolygon(id: '125',  name: 'Room 125',  pixels: [
+      Offset(788, 537), Offset(788, 654), Offset(709, 669), Offset(710, 538),
+    ]),
+  ],
+  navNodes: const {
+    'N152': NavNode(id: 'N152', position: Offset(471, 212), neighbors: ['N153', 'N182', 'N186']),
+    'N153': NavNode(id: 'N153', position: Offset(471, 239), neighbors: ['N154', 'N170', 'N152']),
+    'N154': NavNode(id: 'N154', position: Offset(474, 354), neighbors: ['N155', 'N153']),
+    'N155': NavNode(id: 'N155', position: Offset(473, 378), neighbors: ['N156', 'N154']),
+    'N156': NavNode(id: 'N156', position: Offset(471, 494), neighbors: ['N157', 'N155']),
+    'N157': NavNode(id: 'N157', position: Offset(469, 524), neighbors: ['N169', 'N156']),
+    'N158': NavNode(id: 'N158', position: Offset(467, 639), neighbors: ['N180', 'N169']),
+    'N159': NavNode(id: 'N159', position: Offset(693, 109), neighbors: ['N160']),
+    'N160': NavNode(id: 'N160', position: Offset(691, 156), neighbors: ['N181', 'N159']),
+    'N161': NavNode(id: 'N161', position: Offset(82,  690), neighbors: ['N165']),
+    'N162': NavNode(id: 'N162', position: Offset(110, 766), neighbors: ['N163']),
+    'N163': NavNode(id: 'N163', position: Offset(101, 724), neighbors: ['N164', 'N162']),
+    'N164': NavNode(id: 'N164', position: Offset(156, 715), neighbors: ['N165', 'N163', 'N179']),
+    'N165': NavNode(id: 'N165', position: Offset(151, 678), neighbors: ['N161', 'N164', 'N178', 'N173']),
+    'N166': NavNode(id: 'N166', position: Offset(494, 689), neighbors: ['N180']),
+    'N167': NavNode(id: 'N167', position: Offset(529, 661), neighbors: ['N180', 'N177']),
+    'N168': NavNode(id: 'N168', position: Offset(495, 570), neighbors: ['N169']),
+    'N169': NavNode(id: 'N169', position: Offset(468, 572), neighbors: ['N158', 'N168', 'N157']),
+    'N170': NavNode(id: 'N170', position: Offset(524, 238), neighbors: ['N153', 'N171']),
+    'N171': NavNode(id: 'N171', position: Offset(564, 237), neighbors: ['N170', 'N172']),
+    'N172': NavNode(id: 'N172', position: Offset(611, 238), neighbors: ['N171', 'N181']),
+    'N173': NavNode(id: 'N173', position: Offset(287, 668), neighbors: ['N165', 'N176', 'N180']),
+    'N174': NavNode(id: 'N174', position: Offset(366, 668), neighbors: ['N176', 'N180']),
+    'N175': NavNode(id: 'N175', position: Offset(340, 729), neighbors: ['N176']),
+    'N176': NavNode(id: 'N176', position: Offset(329, 668), neighbors: ['N173', 'N174', 'N175']),
+    'N177': NavNode(id: 'N177', position: Offset(565, 663), neighbors: ['N167']),
+    'N178': NavNode(id: 'N178', position: Offset(145, 617), neighbors: ['N165']),
+    'N179': NavNode(id: 'N179', position: Offset(175, 803), neighbors: ['N164']),
+    'N180': NavNode(id: 'N180', position: Offset(468, 671), neighbors: ['N174', 'N173', 'N166', 'N158', 'N167']),
+    'N181': NavNode(id: 'N181', position: Offset(693, 235), neighbors: ['N172', 'N160']),
+    'N182': NavNode(id: 'N182', position: Offset(476, 94),  neighbors: ['N152']),
+    'N183': NavNode(id: 'N183', position: Offset(272, 106), neighbors: ['N188']),
+    'N184': NavNode(id: 'N184', position: Offset(274, 157), neighbors: ['N187']),
+    'N185': NavNode(id: 'N185', position: Offset(275, 203), neighbors: ['N186']),
+    'N186': NavNode(id: 'N186', position: Offset(382, 207), neighbors: ['N152', 'N187', 'N185']),
+    'N187': NavNode(id: 'N187', position: Offset(351, 160), neighbors: ['N186', 'N188', 'N184']),
+    'N188': NavNode(id: 'N188', position: Offset(325, 111), neighbors: ['N187', 'N183']),
+  },
+  roomToNode: const {
+    'elev_west':      ['N161'],
+    'stair_west':     ['N162'],
+    'entrance_wn':    ['N178'],
+    'entrance_ws':    ['N179'],
+    'entrance_north': ['N182'],
+    '161':   ['N152'],
+    '159':   ['N153', 'N154'],
+    '155':   ['N155', 'N156'],
+    '151':   ['N157', 'N158'],
+    '101':   ['N159'],
+    '103':   ['N160'],
+    '131':   ['N166'],
+    '132':   ['N167'],
+    '148':   ['N168'],
+    '106':   ['N170'],
+    '108':   ['N171'],
+    '110':   ['N172'],
+    '141':   ['N174'],
+    '129':   ['N177'],
+    '161C':  ['N183'],
+    '161B':  ['N184'],
+    '161A':  ['N185'],
+  },
 );
 
 // ── Floor 2 ───────────────────────────────────────────────────
+// Nav nodes to be added.
 final FloorData _floor2 = FloorData(
   floorNumber: 2,
   name: 'Floor 2',
   imagePath: 'https://diarsaleh.com/images/stc_2.png',
-  rooms: const [],
-  navNodes: const {},
-  roomToNode: const <String, List<String>>{}, // TODO: add entries
+
+  // ── Room polygons ──────────────────────────────────────────
+  rooms: const [
+    RoomPolygon(id: '201', name: 'Room 201', pixels: [
+      Offset(1123, 660), Offset(1097, 761), Offset(1105, 763),
+      Offset(1103, 769), Offset(1253, 809), Offset(1255, 803),
+      Offset(1258, 805), Offset(1287, 702), Offset(1261, 697),
+      Offset(1262, 685), Offset(1154, 658), Offset(1152, 668),
+    ]),
+    RoomPolygon(id: '205', name: 'Room 205', pixels: [
+      Offset(1025, 622), Offset(1124, 648), Offset(1097, 761),
+      Offset(1088, 759), Offset(1088, 764), Offset(983, 735),
+      Offset(1007, 642), Offset(1019, 646),
+    ]),
+    RoomPolygon(id: '207', name: 'Room 207', pixels: [
+      Offset(831, 679), Offset(840, 723), Offset(888, 712), Offset(882, 671),
+    ]),
+    RoomPolygon(id: '217', name: 'Room 217', pixels: [
+      Offset(706, 551), Offset(716, 595), Offset(787, 582), Offset(776, 534),
+    ]),
+    RoomPolygon(id: '215', name: 'Room 215', pixels: [
+      Offset(680, 606), Offset(709, 746), Offset(838, 718), Offset(812, 576),
+    ]),
+    RoomPolygon(id: '221', name: 'Room 221', pixels: [
+      Offset(581, 620), Offset(607, 767), Offset(711, 746), Offset(684, 602),
+    ]),
+    RoomPolygon(id: '223', name: 'Room 223', pixels: [
+      Offset(649, 557), Offset(658, 602), Offset(612, 615), Offset(605, 569),
+    ]),
+    RoomPolygon(id: '225', name: 'Room 225', pixels: [
+      Offset(601, 569), Offset(609, 611), Offset(561, 617), Offset(553, 576),
+    ]),
+    RoomPolygon(id: '227', name: 'Room 227', pixels: [
+      Offset(551, 575), Offset(560, 616), Offset(513, 623), Offset(505, 585),
+    ]),
+    RoomPolygon(id: '231', name: 'Room 231', pixels: [
+      Offset(579, 620), Offset(606, 764), Offset(490, 786), Offset(463, 642),
+    ]),
+    RoomPolygon(id: '235', name: 'Room 235', pixels: [
+      Offset(453, 592), Offset(461, 641), Offset(389, 653), Offset(377, 607),
+    ]),
+    RoomPolygon(id: '239', name: 'Room 239', pixels: [
+      Offset(462, 643), Offset(489, 786), Offset(392, 800),
+      Offset(370, 669), Offset(388, 666), Offset(387, 653),
+    ]),
+    RoomPolygon(id: '243', name: 'Room 243', pixels: [
+      Offset(147, 713), Offset(169, 844), Offset(392, 800),
+      Offset(370, 670), Offset(346, 674), Offset(344, 664),
+      Offset(166, 695), Offset(169, 706),
+    ]),
+    RoomPolygon(id: '294', name: 'Room 294', pixels: [
+      Offset(1083, 292), Offset(1083, 439), Offset(1190, 437),
+      Offset(1190, 305), Offset(1168, 306), Offset(1169, 292),
+    ]),
+    RoomPolygon(id: '290', name: 'Room 290', pixels: [
+      Offset(1082, 292), Offset(1081, 440), Offset(975, 439),
+      Offset(975, 304), Offset(996, 304), Offset(995, 292),
+    ]),
+    RoomPolygon(id: '286', name: 'Room 286', pixels: [
+      Offset(974, 292), Offset(974, 439), Offset(910, 439),
+      Offset(908, 323), Offset(922, 323), Offset(920, 294),
+    ]),
+    RoomPolygon(id: '2-R', name: 'Room 2-R', pixels: [
+      Offset(1189, 117), Offset(1191, 334), Offset(1242, 333),
+      Offset(1240, 289), Offset(1280, 291), Offset(1279, 117),
+    ]),
+    RoomPolygon(id: '295', name: 'Room 295', pixels: [
+      Offset(1187, 115), Offset(1190, 246), Offset(1164, 244),
+      Offset(1163, 253), Offset(1083, 253), Offset(1082, 118),
+    ]),
+    RoomPolygon(id: '291', name: 'Room 291', pixels: [
+      Offset(1079, 119), Offset(1082, 246), Offset(1053, 246),
+      Offset(1051, 254), Offset(949, 254), Offset(949, 244),
+      Offset(917, 243), Offset(917, 114),
+    ]),
+    RoomPolygon(id: '285', name: 'Room 285', pixels: [
+      Offset(915, 116), Offset(917, 246), Offset(888, 245),
+      Offset(889, 258), Offset(849, 257), Offset(849, 117),
+    ]),
+    RoomPolygon(id: '275', name: 'Room 275', pixels: [
+      Offset(848, 116), Offset(849, 243), Offset(821, 242),
+      Offset(820, 254), Offset(725, 255), Offset(724, 246),
+      Offset(692, 243), Offset(689, 115),
+    ]),
+    RoomPolygon(id: '267', name: 'Room 267', pixels: [
+      Offset(688, 154), Offset(690, 243), Offset(646, 244),
+      Offset(645, 257), Offset(598, 256), Offset(597, 161),
+      Offset(641, 160), Offset(643, 149),
+    ]),
+    RoomPolygon(id: '267B', name: 'Room 267B', pixels: [
+      Offset(641, 113), Offset(643, 150), Offset(690, 151), Offset(688, 114),
+    ]),
+    RoomPolygon(id: '261', name: 'Room 261', pixels: [
+      Offset(593, 118), Offset(595, 246), Offset(560, 245),
+      Offset(560, 252), Offset(452, 253), Offset(453, 246),
+      Offset(424, 246), Offset(422, 117),
+    ]),
+    RoomPolygon(id: '257', name: 'Room 257', pixels: [
+      Offset(422, 115), Offset(423, 221), Offset(371, 222),
+      Offset(371, 255), Offset(345, 254), Offset(347, 115),
+    ]),
+    RoomPolygon(id: '255', name: 'Room 255', pixels: [
+      Offset(343, 117), Offset(344, 246), Offset(324, 245),
+      Offset(324, 259), Offset(240, 259), Offset(240, 248),
+      Offset(215, 247), Offset(215, 117),
+    ]),
+    RoomPolygon(id: '259', name: 'Room 259', pixels: [
+      Offset(371, 221), Offset(370, 260), Offset(407, 258), Offset(409, 223),
+    ]),
+    RoomPolygon(id: '253', name: 'Room 253', pixels: [
+      Offset(215, 295), Offset(217, 325), Offset(275, 325), Offset(275, 293),
+    ]),
+    RoomPolygon(id: '251', name: 'Room 251', pixels: [
+      Offset(216, 325), Offset(275, 325), Offset(275, 352), Offset(214, 352),
+    ]),
+    RoomPolygon(id: '247', name: 'Room 247', pixels: [
+      Offset(214, 353), Offset(214, 441), Offset(275, 442), Offset(275, 352),
+    ]),
+    RoomPolygon(id: '252', name: 'Room 252', pixels: [
+      Offset(301, 294), Offset(298, 446), Offset(379, 445), Offset(378, 293),
+    ]),
+    RoomPolygon(id: '262', name: 'Room 262', pixels: [
+      Offset(378, 292), Offset(501, 292), Offset(500, 439),
+      Offset(398, 440), Offset(398, 445), Offset(379, 445),
+    ]),
+    RoomPolygon(id: '264', name: 'Room 264', pixels: [
+      Offset(613, 294), Offset(614, 329), Offset(500, 328), Offset(500, 292),
+    ]),
+    RoomPolygon(id: '264A', name: 'Room 264A', pixels: [
+      Offset(611, 329), Offset(615, 440), Offset(499, 439), Offset(502, 328),
+    ]),
+    RoomPolygon(id: '268', name: 'Room 268', pixels: [
+      Offset(615, 294), Offset(616, 439), Offset(650, 439),
+      Offset(651, 397), Offset(660, 397), Offset(661, 307),
+      Offset(672, 307), Offset(672, 292),
+    ]),
+    RoomPolygon(id: '268A', name: 'Room 268A', pixels: [
+      Offset(651, 398), Offset(650, 439), Offset(694, 437), Offset(693, 397),
+    ]),
+
+    // ── Staircases & elevators ────────────────────────────────
+    RoomPolygon(
+      id:    'stair_lobby',
+      name:  'Lobby Stairs',
+      type:  AreaType.staircase,
+      pixels: [
+        Offset(912, 444), Offset(912, 482), Offset(1046, 482), Offset(1047, 443),
+      ],
+    ),
+    RoomPolygon(
+      id:    'stair_east',
+      name:  'East Staircase',
+      type:  AreaType.staircase,
+      pixels: [
+        Offset(1228, 332), Offset(1228, 442), Offset(1283, 441), Offset(1282, 332),
+      ],
+    ),
+    RoomPolygon(
+      id:    'elevator_east',
+      name:  'East Elevator',
+      type:  AreaType.elevator,
+      pixels: [
+        Offset(1241, 288), Offset(1241, 331), Offset(1282, 331), Offset(1281, 290),
+      ],
+    ),
+    RoomPolygon(
+      id:    'stair_west',
+      name:  'West Staircase',
+      type:  AreaType.staircase,
+      pixels: [
+        Offset(72, 749), Offset(91, 856), Offset(142, 846), Offset(123, 739),
+      ],
+    ),
+    RoomPolygon(
+      id:    'elevator_west',
+      name:  'West Elevator',
+      type:  AreaType.elevator,
+      pixels: [
+        Offset(63, 707), Offset(72, 749), Offset(98, 744), Offset(91, 702),
+      ],
+    ),
+
+    // ── Entrances ──────────────────────────────────────────────
+    RoomPolygon(id: 'entrance_south', name: '2nd South Entrance', pixels: [
+      Offset(948, 681), Offset(937, 722), Offset(981, 738), Offset(992, 692),
+    ]),
+    RoomPolygon(id: 'entrance_east', name: '2nd East Entrance', pixels: [
+      Offset(1191, 485), Offset(1191, 562), Offset(1225, 561), Offset(1225, 485),
+    ]),
+  ],
+
+  nativeWidth:  1465.0,
+  nativeHeight: 912.0,
+
+  // ── Nav nodes ──────────────────────────────────────────────
+  navNodes: const {
+    'N73':  NavNode(id: 'N73',  position: Offset(1253, 396), neighbors: ['N92']),
+    'N74':  NavNode(id: 'N74',  position: Offset(1045, 466), neighbors: ['N138', 'N146', 'N91']),
+    'N75':  NavNode(id: 'N75',  position: Offset(975,  464), neighbors: []),
+    'N76':  NavNode(id: 'N76',  position: Offset(106,  800), neighbors: ['N84']),
+    'N79':  NavNode(id: 'N79',  position: Offset(1255, 310), neighbors: ['N93']),
+    'N82':  NavNode(id: 'N82',  position: Offset(78,   727), neighbors: ['N85']),
+    'N84':  NavNode(id: 'N84',  position: Offset(147,  792), neighbors: ['N76', 'N85']),
+    'N85':  NavNode(id: 'N85',  position: Offset(128,  720), neighbors: ['N84', 'N86', 'N82']),
+    'N86':  NavNode(id: 'N86',  position: Offset(122,  688), neighbors: ['N85', 'N87']),
+    'N87':  NavNode(id: 'N87',  position: Offset(153,  685), neighbors: ['N86', 'N90']),
+    'N88':  NavNode(id: 'N88',  position: Offset(350,  649), neighbors: ['N90', 'N133']),
+    'N89':  NavNode(id: 'N89',  position: Offset(376,  646), neighbors: ['N90', 'N133']),
+    'N90':  NavNode(id: 'N90',  position: Offset(294,  656), neighbors: ['N87', 'N88', 'N89', 'N117', 'N133']),
+    'N91':  NavNode(id: 'N91',  position: Offset(1206, 462), neighbors: ['N74', 'N138', 'N147', 'N92']),
+    'N92':  NavNode(id: 'N92',  position: Offset(1207, 394), neighbors: ['N91', 'N73', 'N93']),
+    'N93':  NavNode(id: 'N93',  position: Offset(1211, 317), neighbors: ['N92', 'N79', 'N94']),
+    'N94':  NavNode(id: 'N94',  position: Offset(1208, 270), neighbors: ['N93', 'N95']),
+    'N95':  NavNode(id: 'N95',  position: Offset(1176, 273), neighbors: ['N94', 'N96', 'N97', 'N98']),
+    'N96':  NavNode(id: 'N96',  position: Offset(1175, 245), neighbors: ['N95']),
+    'N97':  NavNode(id: 'N97',  position: Offset(1180, 300), neighbors: ['N95']),
+    'N98':  NavNode(id: 'N98',  position: Offset(1069, 276), neighbors: ['N95', 'N99']),
+    'N99':  NavNode(id: 'N99',  position: Offset(986,  276), neighbors: ['N98', 'N100']),
+    'N100': NavNode(id: 'N100', position: Offset(948,  275), neighbors: ['N99', 'N101', 'N151']),
+    'N101': NavNode(id: 'N101', position: Offset(921,  261), neighbors: ['N100', 'N102']),
+    'N102': NavNode(id: 'N102', position: Offset(900,  276), neighbors: ['N101', 'N103', 'N149', 'N151']),
+    'N103': NavNode(id: 'N103', position: Offset(837,  274), neighbors: ['N102', 'N104']),
+    'N104': NavNode(id: 'N104', position: Offset(715,  275), neighbors: ['N103', 'N105', 'N148', 'N120', 'N114']),
+    'N105': NavNode(id: 'N105', position: Offset(684,  273), neighbors: ['N104', 'N106']),
+    'N106': NavNode(id: 'N106', position: Offset(654,  275), neighbors: ['N105', 'N121', 'N191']),
+    'N107': NavNode(id: 'N107', position: Offset(591,  275), neighbors: ['N121', 'N108']),
+    'N108': NavNode(id: 'N108', position: Offset(563,  276), neighbors: ['N107', 'N120']),
+    'N109': NavNode(id: 'N109', position: Offset(442,  273), neighbors: ['N120', 'N119']),
+    'N110': NavNode(id: 'N110', position: Offset(391,  274), neighbors: ['N119', 'N111']),
+    'N111': NavNode(id: 'N111', position: Offset(356,  275), neighbors: ['N110', 'N118']),
+    'N112': NavNode(id: 'N112', position: Offset(331,  276), neighbors: ['N118', 'N114']),
+    'N113': NavNode(id: 'N113', position: Offset(227,  273), neighbors: ['N114']),
+    'N114': NavNode(id: 'N114', position: Offset(286,  275), neighbors: ['N112', 'N113', 'N115', 'N120', 'N104', 'N117']),
+    'N115': NavNode(id: 'N115', position: Offset(286,  310), neighbors: ['N114', 'N116']),
+    'N116': NavNode(id: 'N116', position: Offset(286,  339), neighbors: ['N117', 'N115']),
+    'N117': NavNode(id: 'N117', position: Offset(287,  431), neighbors: ['N90', 'N116', 'N133', 'N114']),
+    'N118': NavNode(id: 'N118', position: Offset(343,  277), neighbors: ['N111', 'N112']),
+    'N119': NavNode(id: 'N119', position: Offset(415,  278), neighbors: ['N109', 'N110']),
+    'N120': NavNode(id: 'N120', position: Offset(524,  278), neighbors: ['N108', 'N109', 'N114', 'N104', 'N192']),
+    'N121': NavNode(id: 'N121', position: Offset(628,  279), neighbors: ['N106', 'N107', 'N189']),
+    'N122': NavNode(id: 'N122', position: Offset(487,  627), neighbors: ['N125']),
+    'N123': NavNode(id: 'N123', position: Offset(668,  592), neighbors: ['N126']),
+    'N124': NavNode(id: 'N124', position: Offset(701,  586), neighbors: ['N127']),
+    'N125': NavNode(id: 'N125', position: Offset(473,  572), neighbors: ['N128', 'N122', 'N134', 'N129']),
+    'N126': NavNode(id: 'N126', position: Offset(657,  540), neighbors: ['N131', 'N123', 'N127', 'N136', 'N135', 'N150']),
+    'N127': NavNode(id: 'N127', position: Offset(689,  532), neighbors: ['N124', 'N126', 'N132', 'N136', 'N135', 'N148']),
+    'N128': NavNode(id: 'N128', position: Offset(424,  582), neighbors: ['N133', 'N134', 'N125']),
+    'N129': NavNode(id: 'N129', position: Offset(526,  563), neighbors: ['N125', 'N130', 'N135', 'N134']),
+    'N130': NavNode(id: 'N130', position: Offset(574,  558), neighbors: ['N129', 'N131', 'N135', 'N134']),
+    'N131': NavNode(id: 'N131', position: Offset(620,  546), neighbors: ['N130', 'N126', 'N135', 'N134']),
+    'N132': NavNode(id: 'N132', position: Offset(724,  530), neighbors: ['N127', 'N136', 'N135', 'N144', 'N149']),
+    'N133': NavNode(id: 'N133', position: Offset(345,  527), neighbors: ['N88', 'N89', 'N90', 'N134', 'N128', 'N117']),
+    'N134': NavNode(id: 'N134', position: Offset(482,  512), neighbors: ['N133', 'N128', 'N125', 'N135', 'N129', 'N130', 'N131']),
+    'N135': NavNode(id: 'N135', position: Offset(629,  496), neighbors: ['N134', 'N136', 'N132', 'N127', 'N126', 'N131', 'N130', 'N129', 'N148']),
+    'N136': NavNode(id: 'N136', position: Offset(734,  486), neighbors: ['N135', 'N132', 'N127', 'N126', 'N144', 'N148', 'N149', 'N150']),
+    'N137': NavNode(id: 'N137', position: Offset(966,  503), neighbors: ['N141', 'N144', 'N145', 'N146', 'N150']),
+    'N138': NavNode(id: 'N138', position: Offset(1125, 517), neighbors: ['N142', 'N145', 'N74', 'N146', 'N91', 'N147', 'N150']),
+    'N139': NavNode(id: 'N139', position: Offset(1217, 509), neighbors: ['N147']),
+    'N140': NavNode(id: 'N140', position: Offset(965,  716), neighbors: ['N141']),
+    'N141': NavNode(id: 'N141', position: Offset(988,  627), neighbors: ['N140', 'N144', 'N145', 'N137']),
+    'N142': NavNode(id: 'N142', position: Offset(1142, 637), neighbors: ['N145', 'N143', 'N138', 'N147']),
+    'N143': NavNode(id: 'N143', position: Offset(1276, 673), neighbors: ['N142']),
+    'N144': NavNode(id: 'N144', position: Offset(882,  533), neighbors: ['N136', 'N132', 'N145', 'N141', 'N137', 'N150', 'N149']),
+    'N145': NavNode(id: 'N145', position: Offset(1041, 581), neighbors: ['N144', 'N141', 'N137', 'N142', 'N138', 'N146']),
+    'N146': NavNode(id: 'N146', position: Offset(1045, 514), neighbors: ['N137', 'N138', 'N74', 'N145', 'N150']),
+    'N147': NavNode(id: 'N147', position: Offset(1169, 509), neighbors: ['N138', 'N139', 'N91', 'N142']),
+    'N148': NavNode(id: 'N148', position: Offset(707,  456), neighbors: ['N135', 'N136', 'N127', 'N104']),
+    'N149': NavNode(id: 'N149', position: Offset(892,  455), neighbors: ['N136', 'N150', 'N102', 'N132', 'N144']),
+    'N150': NavNode(id: 'N150', position: Offset(885,  495), neighbors: ['N144', 'N137', 'N136', 'N149', 'N126', 'N138', 'N146']),
+    'N151': NavNode(id: 'N151', position: Offset(924,  276), neighbors: ['N102', 'N100']),
+    'N189': NavNode(id: 'N189', position: Offset(634,  417), neighbors: ['N121']),
+    'N190': NavNode(id: 'N190', position: Offset(664,  130), neighbors: ['N191']),
+    'N191': NavNode(id: 'N191', position: Offset(654,  197), neighbors: ['N106', 'N190']),
+    'N192': NavNode(id: 'N192', position: Offset(523,  356), neighbors: ['N120']),
+  },
+
+  // ── Room → nav node mapping ───────────────────────────────
+  roomToNode: const {
+    // Staircases / elevators
+    'stair_east':    ['N73'],
+    'stair_lobby':   ['N75'],
+    'stair_west':    ['N76'],
+    'elevator_east': ['N79'],
+    'elevator_west': ['N82'],
+    'entrance_east': ['N139'],
+    'entrance_south':['N140'],
+
+    // North rooms
+    '2-R':   ['N94'],
+    '295':   ['N96'],
+    '294':   ['N97'],
+    '291':   ['N98', 'N100'],
+    '290':   ['N99'],
+    '286':   ['N151'],
+    '285':   ['N102'],
+    '275':   ['N103', 'N104'],
+    '267':   ['N106'],
+    '267B':  ['N190'],
+    '261':   ['N108', 'N109'],
+    '259':   ['N110'],
+    '257':   ['N111'],
+    '255':   ['N112', 'N113'],
+    '253':   ['N115'],
+    '251':   ['N116'],
+    '247':   ['N117'],
+    '252':   ['N118'],
+    '262':   ['N119'],
+    '264':   ['N120'],
+    '264A':  ['N192'],
+    '268':   ['N121'],
+    '268A':  ['N189'],
+
+    // South rooms
+    '243':   ['N87', 'N88'],
+    '239':   ['N89'],
+    '235':   ['N128'],
+    '231':   ['N122'],
+    '227':   ['N129'],
+    '225':   ['N130'],
+    '223':   ['N131'],
+    '221':   ['N123'],
+    '217':   ['N132'],
+    '215':   ['N124'],
+    '207':   ['N144'],
+    '205':   ['N141'],
+    '201':   ['N142', 'N143'],
+  },
 );
 
 // ── Floor 3 ───────────────────────────────────────────────────
@@ -45,6 +558,8 @@ final FloorData _floor3 = FloorData(
   floorNumber: 3,
   name: 'Floor 3',
   imagePath: 'https://diarsaleh.com/images/stc_3.png',
+  nativeWidth:  1201.0,
+  nativeHeight: 666.0,
 
   // ── Room polygons ──────────────────────────────────────────
   rooms: const [
@@ -227,6 +742,54 @@ final FloorData _floor3 = FloorData(
       Offset(85, 526), Offset(77, 484),
     ]),
 
+    // ── Staircases & Elevators ────────────────────────────────
+    RoomPolygon(
+      id:   'stair_east',
+      name: 'East Staircase',
+      type: AreaType.staircase,
+      pixels: [
+        Offset(1051, 279), Offset(1052, 214),
+        Offset(1010, 216), Offset(1012, 285),
+        Offset(1051, 285),
+      ],
+    ),
+    RoomPolygon(
+      id:   'elevator_east',
+      name: 'East Elevator',
+      type: AreaType.elevator,
+      pixels: [
+        Offset(1008, 180), Offset(1012, 213),
+        Offset(1053, 214), Offset(1054, 181),
+      ],
+    ),
+    RoomPolygon(
+      id:   'stair_lobby',
+      name: 'Lobby Staircase',
+      type: AreaType.staircase,
+      pixels: [
+        Offset(748, 308), Offset(748, 339),
+        Offset(859, 338), Offset(858, 307),
+      ],
+    ),
+    RoomPolygon(
+      id:   'stair_west',
+      name: 'West Staircase',
+      type: AreaType.staircase,
+      pixels: [
+        Offset(47, 562), Offset(64, 650),
+        Offset(105, 643), Offset(90, 554),
+      ],
+    ),
+    RoomPolygon(
+      id:   'elevator_west',
+      name: 'West Elevator',
+      type: AreaType.elevator,
+      pixels: [
+        Offset(41, 527), Offset(49, 561),
+        Offset(67, 557), Offset(61, 524),
+      ],
+    ),
+
     // ── 330-series rooms ─────────────────────────────────────
     RoomPolygon(id: '330A', name: 'Room 330A', pixels: [
       Offset(148, 471), Offset(157, 515),
@@ -371,12 +934,12 @@ final FloorData _floor3 = FloorData(
     'N22': NavNode(
       id: 'N22',
       position: Offset(995, 205),
-      neighbors: ['N20', 'N23'],
+      neighbors: ['N20', 'N72', 'N81'],
     ),
     'N23': NavNode(
       id: 'N23',
       position: Offset(992, 294),
-      neighbors: ['N22', 'N24'],
+      neighbors: ['N24', 'N72'],
     ),
     'N24': NavNode(
       id: 'N24',
@@ -391,12 +954,12 @@ final FloorData _floor3 = FloorData(
     'N26': NavNode(
       id: 'N26',
       position: Offset(731, 289),
-      neighbors: ['N16', 'N27'],
+      neighbors: ['N16', 'N27', 'N_stairLobby'],
     ),
     'N27': NavNode(
       id: 'N27',
       position: Offset(728, 390),
-      neighbors: ['N26', 'N28'],
+      neighbors: ['N26', 'N28', 'N_stairLobby'],
     ),
     'N28': NavNode(
       id: 'N28',
@@ -553,6 +1116,19 @@ final FloorData _floor3 = FloorData(
       position: Offset(995, 138),
       neighbors: ['N19', 'N20'],
     ),
+    // ── Staircase / elevator nodes (cross-floor anchors) ─────
+    'N_stairLobby': NavNode(
+      id: 'N_stairLobby',
+      position: Offset(803, 323),
+      neighbors: ['N26', 'N27'],
+    ),
+    'N71': NavNode(id: 'N71', position: Offset(1030, 247), neighbors: ['N72']),
+    'N72': NavNode(id: 'N72', position: Offset(995,  247), neighbors: ['N22', 'N23', 'N71']),
+    'N77': NavNode(id: 'N77', position: Offset(70,   577), neighbors: ['N78']),
+    'N78': NavNode(id: 'N78', position: Offset(101,  565), neighbors: ['N62', 'N63', 'N77']),
+    'N81': NavNode(id: 'N81', position: Offset(1034, 198), neighbors: ['N22']),
+    'N83': NavNode(id: 'N83', position: Offset(51,   543), neighbors: ['N61']),
+
     'N59': NavNode(
       id: 'N59',
       position: Offset(282, 499),
@@ -566,17 +1142,17 @@ final FloorData _floor3 = FloorData(
     'N61': NavNode(
       id: 'N61',
       position: Offset(75, 540),
-      neighbors: ['N62'],
+      neighbors: ['N62', 'N83'],
     ),
     'N62': NavNode(
       id: 'N62',
       position: Offset(106, 536),
-      neighbors: ['N60', 'N63', 'N61'],
+      neighbors: ['N60', 'N63', 'N61', 'N78'],
     ),
     'N63': NavNode(
       id: 'N63',
       position: Offset(118, 587),
-      neighbors: ['N64', 'N62'],
+      neighbors: ['N64', 'N62', 'N78'],
     ),
     'N64': NavNode(
       id: 'N64',
@@ -600,6 +1176,13 @@ final FloorData _floor3 = FloorData(
   // Rooms with two doors list both nodes — the router picks whichever
   // gives the shorter path automatically.
   roomToNode: const {
+    // Staircases & elevators
+    'stair_east':    ['N71'],
+    'elevator_east': ['N81'],
+    'stair_west':    ['N77'],
+    'elevator_west': ['N83'],
+    'stair_lobby':   ['N_stairLobby'],
+
     // North row
     '347':        ['N1', 'N2'],   // top door + hallway door
     '341':        ['N2', 'N4'],   // two doors along west wall
