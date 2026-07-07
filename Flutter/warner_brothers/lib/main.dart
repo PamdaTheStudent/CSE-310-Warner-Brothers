@@ -84,7 +84,7 @@ class _MapScreenState extends State<MapScreen> {
   // Text input controllers (fallback when no room is tapped).
   final TextEditingController startController = TextEditingController();
   final TextEditingController endController   = TextEditingController();
-
+//jhhjhj
   // ── Room tap handling ───────────────────────────────────────
   void _handleMapTap(Offset localPos, _ImageRect rect) {
     for (final room in _floor.rooms) {
