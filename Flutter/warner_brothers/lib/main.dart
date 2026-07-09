@@ -1,5 +1,9 @@
 import 'dart:collection';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:html/parser.dart' as html;
 import 'models/nav_models.dart';
 import 'data/stc_building.dart';
 import 'theme.dart';
@@ -63,6 +67,38 @@ class _MapScreenState extends State<MapScreen> {
   // Current step along the route (index into routePoints).
   int _currentStep = 0;
 
+  // Set of filenames found in the remote image gallery.
+  Set<String> _uploadedImages = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshUploadedImages();
+  }
+
+  Future<void> _refreshUploadedImages() async {
+    try {
+      final response = await http.get(Uri.parse('https://diarsaleh.com/images/'));
+      if (response.statusCode == 200) {
+        final document = html.parse(response.body);
+        final images = document.querySelectorAll('.gallery .image a');
+        final names = <String>{};
+        for (final element in images) {
+          final href = element.attributes['href'];
+          if (href != null) {
+            final name = href.split('/').last;
+            if (name.isNotEmpty) names.add(name);
+          }
+        }
+        setState(() {
+          _uploadedImages = names;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching gallery: $e");
+    }
+  }
+
   void switchView() {
     setState(() {
       __indoor = !__indoor;
@@ -98,6 +134,23 @@ class _MapScreenState extends State<MapScreen> {
 
   // ── Room tap handling ───────────────────────────────────────
   void _handleMapTap(Offset localPos, _ImageRect rect) {
+    // Check for edge taps first (navigation graph connections)
+    if (_pathSteps.isEmpty && !__indoor) {
+      for (final node in _floor.navNodes.values) {
+        final p1 = _pixelToScreen(node.position, rect);
+        for (final neighborId in node.neighbors) {
+          final neighbor = _floor.navNodes[neighborId];
+          if (neighbor != null) {
+            final p2 = _pixelToScreen(neighbor.position, rect);
+            if (_isTapOnSegment(localPos, p1, p2)) {
+              _showUploadDialog(node.id, neighbor.id);
+              return;
+            }
+          }
+        }
+      }
+    }
+
     for (final room in _floor.rooms) {
       final pts  = room.pixels.map((p) => _pixelToScreen(p, rect)).toList();
       final path = Path()..moveTo(pts.first.dx, pts.first.dy);
@@ -132,6 +185,114 @@ class _MapScreenState extends State<MapScreen> {
       }
       return;
     }
+  }
+
+  bool _isTapOnSegment(Offset p, Offset a, Offset b) {
+    const double threshold = 15.0;
+    final double l2 = (a - b).distanceSquared;
+    if (l2 == 0.0) return (p - a).distance < threshold;
+    double t = ((p.dx - a.dx) * (b.dx - a.dx) + (p.dy - a.dy) * (b.dy - a.dy)) / l2;
+    t = math.max(0.0, math.min(1.0, t));
+    final Offset projection = Offset(a.dx + t * (b.dx - a.dx), a.dy + t * (b.dy - a.dy));
+    return (p - projection).distance < threshold;
+  }
+
+  Future<void> _showUploadDialog(String nodeA, String nodeB) async {
+    String currentA = nodeA;
+    String currentB = nodeB;
+    final TextEditingController filenameController = TextEditingController(text: "${currentA}${currentB}.png");
+    XFile? pickedFile;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("Upload Image"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Select an image to upload for connection: $nodeA ↔ $nodeB"),
+                const SizedBox(height: 16),
+                if (pickedFile != null)
+                  Text("Selected: ${pickedFile!.name}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                ElevatedButton(
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final file = await picker.pickImage(source: ImageSource.gallery);
+                    if (file != null) {
+                      setDialogState(() => pickedFile = file);
+                    }
+                  },
+                  child: const Text("Pick Image"),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: filenameController,
+                        decoration: const InputDecoration(labelText: "Filename (optional)"),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.swap_horiz),
+                      onPressed: () {
+                        setDialogState(() {
+                          final temp = currentA;
+                          currentA = currentB;
+                          currentB = temp;
+                          // Preserve extension if user edited it
+                          String ext = ".png";
+                          if (filenameController.text.contains('.')) {
+                            ext = "." + filenameController.text.split('.').last;
+                          }
+                          filenameController.text = "${currentA}${currentB}$ext";
+                        });
+                      },
+                      tooltip: "Swap node order",
+                    ),
+                  ],
+                ),
+                const TextField(
+                  obscureText: true,
+                  decoration: InputDecoration(labelText: "Admin Password"),
+                  enabled: false,
+                  controller: null,
+                ),
+                const Text("Password automatically set to 'a'", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: pickedFile == null ? null : () async {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.pop(context);
+                
+                try {
+                  var request = http.MultipartRequest('POST', Uri.parse('https://diarsaleh.com/upload'));
+                  request.fields['password'] = 'a';
+                  request.fields['filename'] = filenameController.text;
+                  request.files.add(await http.MultipartFile.fromPath('image', pickedFile!.path));
+
+                  var response = await request.send();
+                  if (response.statusCode == 200) {
+                    messenger.showSnackBar(const SnackBar(content: Text("Upload successful!")));
+                    _refreshUploadedImages();
+                  } else {
+                    messenger.showSnackBar(SnackBar(content: Text("Upload failed: ${response.statusCode}")));
+                  }
+                } catch (e) {
+                  messenger.showSnackBar(SnackBar(content: Text("Error: $e")));
+                }
+              },
+              child: const Text("Upload"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ── Pathfinding ─────────────────────────────────────────────
@@ -349,9 +510,10 @@ class _MapScreenState extends State<MapScreen> {
                         CustomPaint(
                           size: Size(constraints.maxWidth, constraints.maxHeight),
                           painter: GraphPainter(
-                            nodes: _floor.navNodes,
-                            rect:  rect,
-                            color: Palette.accent(context),
+                            nodes:          _floor.navNodes,
+                            rect:           rect,
+                            color:          Palette.accent(context),
+                            uploadedImages: _uploadedImages,
                           ),
                         ),
 
@@ -1041,13 +1203,15 @@ class PathPainter extends CustomPainter {
 
 class GraphPainter extends CustomPainter {
   final Map<String, NavNode> nodes;
-  final _ImageRect rect;
-  final Color color;
+  final _ImageRect           rect;
+  final Color                color;
+  final Set<String>          uploadedImages;
 
   GraphPainter({
     required this.nodes,
     required this.rect,
     required this.color,
+    this.uploadedImages = const {},
   });
 
   Offset _toScreen(Offset p) => Offset(
@@ -1057,10 +1221,6 @@ class GraphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final edgePaint = Paint()
-      ..color = color.withAlpha(80)
-      ..strokeWidth = 1.2;
-
     final nodePaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
@@ -1073,14 +1233,33 @@ class GraphPainter extends CustomPainter {
       for (final neighborId in node.neighbors) {
         final neighbor = nodes[neighborId];
         if (neighbor != null) {
-          // Avoid drawing the same edge twice (A->B and B->A)
           final edgeId = node.id.compareTo(neighborId) < 0
               ? '${node.id}-$neighborId'
               : '$neighborId-${node.id}';
 
           if (!drawnEdges.contains(edgeId)) {
             final p2 = _toScreen(neighbor.position);
-            canvas.drawLine(p1, p2, edgePaint);
+
+            // Check upload status for both directions
+            // We check for .png and .jpg as per your example gallery contents
+            bool forward = uploadedImages.contains("${node.id}${neighborId}.png") || 
+                           uploadedImages.contains("${node.id}${neighborId}.jpg");
+            bool backward = uploadedImages.contains("${neighborId}${node.id}.png") || 
+                            uploadedImages.contains("${neighborId}${node.id}.jpg");
+
+            Color edgeColor;
+            if (forward && backward) {
+              edgeColor = Colors.greenAccent;
+            } else if (forward || backward) {
+              edgeColor = Colors.orangeAccent;
+            } else {
+              edgeColor = Colors.redAccent;
+            }
+
+            canvas.drawLine(p1, p2, Paint()
+              ..color = edgeColor.withAlpha(180)
+              ..strokeWidth = 2.0);
+            
             drawnEdges.add(edgeId);
           }
         }
@@ -1092,7 +1271,7 @@ class GraphPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: node.id,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 6,
             fontWeight: FontWeight.bold,
@@ -1111,7 +1290,7 @@ class GraphPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant GraphPainter old) =>
-      old.nodes != nodes || old.rect != rect;
+      old.nodes != nodes || old.rect != rect || old.uploadedImages != uploadedImages;
 }
 
 // ── _NodeRef ─────────────────────────────────────────────────
