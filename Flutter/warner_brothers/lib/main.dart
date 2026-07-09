@@ -136,18 +136,29 @@ class _MapScreenState extends State<MapScreen> {
   void _handleMapTap(Offset localPos, _ImageRect rect) {
     // Check for edge taps first (navigation graph connections)
     if (_pathSteps.isEmpty && !__indoor) {
+      String? bestNodeA;
+      String? bestNodeB;
+      double minDistance = 15.0; // Acts as the selection threshold
+
       for (final node in _floor.navNodes.values) {
         final p1 = _pixelToScreen(node.position, rect);
         for (final neighborId in node.neighbors) {
           final neighbor = _floor.navNodes[neighborId];
           if (neighbor != null) {
             final p2 = _pixelToScreen(neighbor.position, rect);
-            if (_isTapOnSegment(localPos, p1, p2)) {
-              _showUploadDialog(node.id, neighbor.id);
-              return;
+            final distance = _distanceToSegment(localPos, p1, p2);
+            if (distance < minDistance) {
+              minDistance = distance;
+              bestNodeA = node.id;
+              bestNodeB = neighbor.id;
             }
           }
         }
+      }
+
+      if (bestNodeA != null && bestNodeB != null) {
+        _showUploadDialog(bestNodeA, bestNodeB);
+        return;
       }
     }
 
@@ -187,14 +198,13 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  bool _isTapOnSegment(Offset p, Offset a, Offset b) {
-    const double threshold = 15.0;
+  double _distanceToSegment(Offset p, Offset a, Offset b) {
     final double l2 = (a - b).distanceSquared;
-    if (l2 == 0.0) return (p - a).distance < threshold;
+    if (l2 == 0.0) return (p - a).distance;
     double t = ((p.dx - a.dx) * (b.dx - a.dx) + (p.dy - a.dy) * (b.dy - a.dy)) / l2;
     t = math.max(0.0, math.min(1.0, t));
     final Offset projection = Offset(a.dx + t * (b.dx - a.dx), a.dy + t * (b.dy - a.dy));
-    return (p - projection).distance < threshold;
+    return (p - projection).distance;
   }
 
   Future<void> _showUploadDialog(String nodeA, String nodeB) async {
@@ -469,7 +479,7 @@ class _MapScreenState extends State<MapScreen> {
                     constraints.maxWidth, constraints.maxHeight);
 
                 return InteractiveViewer(
-                  maxScale: 5,
+                  maxScale: 10,
                   minScale: 1,
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
@@ -1224,6 +1234,7 @@ class GraphPainter extends CustomPainter {
     final nodePaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
+    
 
     final Set<String> drawnEdges = {};
 
@@ -1265,7 +1276,7 @@ class GraphPainter extends CustomPainter {
         }
       }
       // Draw a small dot for each node
-      canvas.drawCircle(p1, 3.5, nodePaint);
+      canvas.drawCircle(p1, 1.75, nodePaint);
 
       // Draw node ID text
       final textPainter = TextPainter(
@@ -1273,7 +1284,7 @@ class GraphPainter extends CustomPainter {
           text: node.id,
           style: const TextStyle(
             color: Colors.black,
-            fontSize: 6,
+            fontSize: 3,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -1283,7 +1294,7 @@ class GraphPainter extends CustomPainter {
       // Position text slightly above and centered horizontally relative to the node dot
       textPainter.paint(
         canvas,
-        Offset(p1.dx - (textPainter.width / 2), p1.dy - textPainter.height + 4),
+        Offset(p1.dx - (textPainter.width / 2), p1.dy - textPainter.height + 2),
       );
     }
   }
