@@ -344,6 +344,17 @@ class _MapScreenState extends State<MapScreen> {
                         painter: _buildPathPainter(rect, context),
                       ),
 
+                      // Full navigation graph (nodes + connections) shown when no route is active
+                      if (!__indoor && _pathSteps.isEmpty)
+                        CustomPaint(
+                          size: Size(constraints.maxWidth, constraints.maxHeight),
+                          painter: GraphPainter(
+                            nodes: _floor.navNodes,
+                            rect:  rect,
+                            color: Palette.accent(context),
+                          ),
+                        ),
+
                       // Next / Prev step overlay (only shown when a route exists)
                       if (_pathSteps.isNotEmpty)
                         Positioned(
@@ -1026,6 +1037,81 @@ class PathPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant PathPainter old) =>
       old.travelled != travelled || old.currentDot != currentDot || old.points != points;
+}
+
+class GraphPainter extends CustomPainter {
+  final Map<String, NavNode> nodes;
+  final _ImageRect rect;
+  final Color color;
+
+  GraphPainter({
+    required this.nodes,
+    required this.rect,
+    required this.color,
+  });
+
+  Offset _toScreen(Offset p) => Offset(
+        rect.offsetX + (p.dx / rect.nativeWidth) * rect.renderedWidth,
+        rect.offsetY + (p.dy / rect.nativeHeight) * rect.renderedHeight,
+      );
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final edgePaint = Paint()
+      ..color = color.withAlpha(80)
+      ..strokeWidth = 1.2;
+
+    final nodePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final Set<String> drawnEdges = {};
+
+    for (final node in nodes.values) {
+      final p1 = _toScreen(node.position);
+
+      for (final neighborId in node.neighbors) {
+        final neighbor = nodes[neighborId];
+        if (neighbor != null) {
+          // Avoid drawing the same edge twice (A->B and B->A)
+          final edgeId = node.id.compareTo(neighborId) < 0
+              ? '${node.id}-$neighborId'
+              : '$neighborId-${node.id}';
+
+          if (!drawnEdges.contains(edgeId)) {
+            final p2 = _toScreen(neighbor.position);
+            canvas.drawLine(p1, p2, edgePaint);
+            drawnEdges.add(edgeId);
+          }
+        }
+      }
+      // Draw a small dot for each node
+      canvas.drawCircle(p1, 3.5, nodePaint);
+
+      // Draw node ID text
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: node.id,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 6,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      // Position text slightly above and centered horizontally relative to the node dot
+      textPainter.paint(
+        canvas,
+        Offset(p1.dx - (textPainter.width / 2), p1.dy - textPainter.height + 4),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GraphPainter old) =>
+      old.nodes != nodes || old.rect != rect;
 }
 
 // ── _NodeRef ─────────────────────────────────────────────────
