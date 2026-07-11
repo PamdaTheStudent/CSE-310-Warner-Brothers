@@ -292,6 +292,7 @@ class _MapScreenState extends State<MapScreen> {
                     _refreshUploadedImages();
                   } else {
                     messenger.showSnackBar(SnackBar(content: Text("Upload failed: ${response.statusCode}")));
+                    _refreshUploadedImages();
                   }
                 } catch (e) {
                   messenger.showSnackBar(SnackBar(content: Text("Error: $e")));
