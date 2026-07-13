@@ -52,7 +52,7 @@ final BuildingData stcBuilding = BuildingData(
 final FloorData _floor1 = FloorData(
   floorNumber: 1,
   name: 'Floor 1',
-  imagePath: 'https://diarsaleh.com/images/stc_1.png',
+  imagePath: "assets/images/stc/floor_map/stc_1.png",
   nativeWidth:  1479.0,
   nativeHeight: 883.0,
   rooms: const [
@@ -225,7 +225,7 @@ final FloorData _floor1 = FloorData(
 final FloorData _floor2 = FloorData(
   floorNumber: 2,
   name: 'Floor 2',
-  imagePath: 'https://diarsaleh.com/images/stc_2.png',
+  imagePath: "assets/images/stc/floor_map/stc_2.png",
 
   // ── Room polygons ──────────────────────────────────────────
   rooms: const [
@@ -853,7 +853,7 @@ final FloorData _floor2 = FloorData(
 final FloorData _floor3 = FloorData(
   floorNumber: 3,
   name: 'Floor 3',
-  imagePath: 'https://diarsaleh.com/images/stc_3.png',
+  imagePath: "assets/images/stc/floor_map/stc_3.png",
   nativeWidth:  1201.0,
   nativeHeight: 666.0,
 
