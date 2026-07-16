@@ -318,12 +318,19 @@ class _MapScreenState extends State<MapScreen> {
                       SizedBox(
                         width:  constraints.maxWidth,
                         height: constraints.maxHeight,
-                        child: Image.network(
-                          __indoor ? resolveName() : _floor.imagePath,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) =>
-                              const ColoredBox(color: Color(0xFF1E1E1E)),
-                        ),
+                        child: __indoor
+                            ? Image.network(
+                                resolveName(),
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    const ColoredBox(color: Color(0xFF1E1E1E)),
+                              )
+                            : Image.asset(
+                                _floor.imagePath,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    const ColoredBox(color: Color(0xFF1E1E1E)),
+                              ),
                       ),
 
                       // Building outline + room polygons
