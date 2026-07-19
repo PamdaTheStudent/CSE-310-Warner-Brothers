@@ -52,7 +52,7 @@ final BuildingData stcBuilding = BuildingData(
 final FloorData _floor1 = FloorData(
   floorNumber: 1,
   name: 'Floor 1',
-  imagePath: "assets/images/stc/floor_map/stc_1.png",
+  imagePath: "assets/images/stc/floor_map/stc_1.png", //Hi my name is benjamin netanyahu and this is my line of code
   nativeWidth:  1479.0,
   nativeHeight: 883.0,
   rooms: const [
